@@ -1365,7 +1365,7 @@ function returnToOrigin(){
 function checkInsideObject(){
   //With in here check the planets, moon, and sun
   let inside = false;
-  let objectBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3())
+  let objectBox = new THREE.Box3();
   let cameraPos = new THREE.Vector3();
   camera.getWorldPosition(cameraPos);
 
