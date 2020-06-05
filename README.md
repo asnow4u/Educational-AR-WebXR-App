@@ -6,7 +6,7 @@ An AR application using WebXR that will help visually demonstrate core concepts 
 
 Use this link to launch the application:
 
-[https://osu-2019-capstone-cs19.github.io/Educational-AR-WebXR-App/dist](https://osu-2019-capstone-cs19.github.io/Educational-AR-WebXR-App/dist)
+[https://asnow4u.github.io/Educational-AR-WebXR-App/dist](https://asnow4u.github.io/Educational-AR-WebXR-App/dist)
 
 Not all devices will be compatible with AR. Use this Link to check if your device is compatible:
 
