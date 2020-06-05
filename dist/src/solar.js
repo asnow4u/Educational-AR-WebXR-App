@@ -608,7 +608,7 @@ function animateScene(){
     updatePlanets();
     updateMoon();
   }
-  checkInsideObject();
+  //checkInsideObject();
   if(collisionAlert.visible){
     collisionAlert.position.z = -.5;
 
@@ -1362,38 +1362,38 @@ function returnToOrigin(){
 ******************************************************************
 => Check if camera is inside of Obj
 ******************************************************************/
-function checkInsideObject(){
-  //With in here check the planets, moon, and sun
-  let inside = false;
-  let objectBox = new THREE.Box3();
-  let cameraPos = new THREE.Vector3();
-  camera.getWorldPosition(cameraPos);
-
-  //planets
-  for (let i=0; i<jsonObj.numPlanets; i++){
-    objectBox.setFromObject(planets[i]);
-
-    if (objectBox.containsPoint(cameraPos)){
-      inside = true;
-      console.log("planet " + i);
-    }
-  }
-  //Moon
-  objectBox.setFromObject(moonObj);
-  if (objectBox.containsPoint(cameraPos)){
-    inside = true;
-    console.log("moon");
-  }
-
-  //Sun
-  objectBox.setFromObject(sunObj);
-  if (objectBox.containsPoint(cameraPos)){
-    inside = true;
-    console.log("sun");
-  }
-
-  collisionAlert.visible = inside;
-}
+// function checkInsideObject(){
+//   //With in here check the planets, moon, and sun
+//   let inside = false;
+//   let objectBox = new THREE.Box3();
+//   let cameraPos = new THREE.Vector3();
+//   camera.getWorldPosition(cameraPos);
+//
+//   //planets
+//   for (let i=0; i<jsonObj.numPlanets; i++){
+//     objectBox.setFromObject(planets[i]);
+//
+//     if (objectBox.containsPoint(cameraPos)){
+//       inside = true;
+//       console.log("planet " + i);
+//     }
+//   }
+//   //Moon
+//   objectBox.setFromObject(moonObj);
+//   if (objectBox.containsPoint(cameraPos)){
+//     inside = true;
+//     console.log("moon");
+//   }
+//
+//   //Sun
+//   objectBox.setFromObject(sunObj);
+//   if (objectBox.containsPoint(cameraPos)){
+//     inside = true;
+//     console.log("sun");
+//   }
+//
+//   collisionAlert.visible = inside;
+// }
 
 /*****************************************************************
   Scene Event Handlers
