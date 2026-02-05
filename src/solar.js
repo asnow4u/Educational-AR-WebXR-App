@@ -2,7 +2,7 @@
   Solar.js
 ******************************************************************/
 
-import {Workbox} from 'workbox-window';
+import { Workbox } from 'workbox-window';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -66,7 +66,7 @@ jsonObj = JSON.parse(request.responseText);
 /*****************************************************************
   Renderer
 ******************************************************************/
-let renderer = new THREE.WebGLRenderer({antialias: true});
+let renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.autoClear = false;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -88,7 +88,7 @@ moonOrigin = new THREE.Object3D();
 /*****************************************************************
   Camera
 ******************************************************************/
-let camera = new THREE.PerspectiveCamera( 45, window.innerWidth/window.innerHeight, 0.001, 10000000);
+let camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.001, 10000000);
 camera.matrixAutoUpdate = false;
 scene.add(camera);
 
@@ -96,11 +96,11 @@ scene.add(camera);
 /*****************************************************************
   Lights
 ******************************************************************/
-let sunLight = new THREE.PointLight( 0xfffee8, 1, 0, 0);
-sunLight.position.set( 0, 0, 0);
+let sunLight = new THREE.PointLight(0xfffee8, 1, 0, 0);
+sunLight.position.set(0, 0, 0);
 sunLight.visible = false;
 
-let cameraLight = new THREE.PointLight( 0xfffee8, 2, 0, 0);
+let cameraLight = new THREE.PointLight(0xfffee8, 2, 0, 0);
 cameraLight.visible = true;
 camera.add(cameraLight);
 
@@ -139,14 +139,26 @@ function init() {
 function checkSupportedState() {
   navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
     let statusBox = document.getElementById('statusbox');
+    let statusSub = document.getElementById('status-sub');
+
     if (supported) {
 
       xrButton.addEventListener('click', toggleAR);
 
     } else {
-      statusBox.innerHTML = 'Houston we have a problem, your device is not compatible';
-      xrButton.style.backgroundColor = '#cc0000';
-      xrButton.innerHTML = 'Error';
+      // Primary Alert and Details in the center (statusBox)
+      statusBox.innerHTML = 'Houston, we have a problem! ⚠️<br><small style="font-size: 0.8rem; opacity: 0.8;">Your device is not compatible with WebXR.</small>';
+      statusBox.classList.add('error-text');
+
+      // Clear bottom sub-status
+      statusSub.innerHTML = '';
+
+      xrButton.innerHTML = 'ABORT';
+      xrButton.classList.add('error-button');
+
+      // Hide Mission Briefing to make room for the Centered Alert
+      let desc = document.getElementById('description');
+      if (desc) desc.style.display = 'none';
     }
   });
 }
@@ -157,8 +169,8 @@ function checkSupportedState() {
 ******************************************************************
 => Turn AR session on / off
 ******************************************************************/
-async function toggleAR(){
-  if (arActivated){
+async function toggleAR() {
+  if (arActivated) {
     console.log("AR is already activated");
     return;
   }
@@ -182,16 +194,16 @@ function loadModels() {
   //Sun Loader
   loader.load(
     jsonObj.sun.file,
-    gltf => loadSun( gltf ),
+    gltf => loadSun(gltf),
     xhr => onProgress(xhr),
     error => onError(error)
   );
 
   //Planets Loader
-  for (let i=0; i < jsonObj.numPlanets; i++){
+  for (let i = 0; i < jsonObj.numPlanets; i++) {
     loader.load(
       jsonObj.planets[i].file,
-      gltf => loadPlanet( gltf ),
+      gltf => loadPlanet(gltf),
       xhr => onProgress(xhr),
       error => onError(error)
     );
@@ -200,7 +212,7 @@ function loadModels() {
   //Earth's Moon Loader
   loader.load(
     jsonObj.planets[2].moon.file,
-    gltf => loadMoon( gltf ),
+    gltf => loadMoon(gltf),
     xhr => onProgress(xhr),
     error => onError(error)
   );
@@ -210,9 +222,9 @@ function loadSun(gltf) {
   sunObj = gltf.scene;
 
   //SunObj is scalled a 10th more due to its size
-  sunObj.scale.set( jsonObj.sun.radius/jsonObj.sizeScale/10,
-                    jsonObj.sun.radius/jsonObj.sizeScale/10,
-                    jsonObj.sun.radius/jsonObj.sizeScale/10);
+  sunObj.scale.set(jsonObj.sun.radius / jsonObj.sizeScale / 10,
+    jsonObj.sun.radius / jsonObj.sizeScale / 10,
+    jsonObj.sun.radius / jsonObj.sizeScale / 10);
   sunObj.rotateZ(jsonObj.sun.rotationAngle);
   sunObj.name = jsonObj.sun.name;
   sunObj.add(sunLight);
@@ -223,7 +235,7 @@ function loadPlanet(gltf) {
   let num;
 
   //Places planets in proper order
-  switch (gltf.parser.options.path){
+  switch (gltf.parser.options.path) {
     case "./model/planets-glb/mercury/":
       num = 0;
       break;
@@ -262,25 +274,25 @@ function loadPlanet(gltf) {
 
   //Add scale based on Json
   planets[num] = gltf.scene
-  planets[num].scale.set((jsonObj.planets[num].radius/jsonObj.sizeScale),
-                          (jsonObj.planets[num].radius/jsonObj.sizeScale),
-                          (jsonObj.planets[num].radius/jsonObj.sizeScale));
+  planets[num].scale.set((jsonObj.planets[num].radius / jsonObj.sizeScale),
+    (jsonObj.planets[num].radius / jsonObj.sizeScale),
+    (jsonObj.planets[num].radius / jsonObj.sizeScale));
   planets[num].rotateZ(jsonObj.planets[num].rotationAngle);
   planets[num].name = jsonObj.planets[num].name;
 
   //Establish Origin / Hitbox
-  let geometry = new THREE.SphereGeometry( 0.04 );
-  let material = new THREE.MeshBasicMaterial( {color: 0x00ff00, opacity: 0, transparent: true} );
+  let geometry = new THREE.SphereGeometry(0.04);
+  let material = new THREE.MeshBasicMaterial({ color: 0x00ff00, opacity: 0, transparent: true });
 
-  if (num > 3){
-    geometry = new THREE.SphereGeometry( 0.1 );
-    material = new THREE.MeshBasicMaterial( {color: 0xff0000, opacity: 0, transparent: true});
+  if (num > 3) {
+    geometry = new THREE.SphereGeometry(0.1);
+    material = new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0, transparent: true });
   }
 
-  planetOrigins[num] = new THREE.Mesh( geometry, material );
-  planetOrigins[num].position.set(pivots[num].position.x + jsonObj.planets[num].distanceFromSun/jsonObj.distanceScale,
-                            pivots[num].position.y,
-                            pivots[num].position.z);
+  planetOrigins[num] = new THREE.Mesh(geometry, material);
+  planetOrigins[num].position.set(pivots[num].position.x + jsonObj.planets[num].distanceFromSun / jsonObj.distanceScale,
+    pivots[num].position.y,
+    pivots[num].position.z);
 
   planetOrigins[num].name = "planetOrigin";
 
@@ -290,32 +302,32 @@ function loadPlanet(gltf) {
   pivots[num].rotateZ(jsonObj.planets[num].orbitInclination);
 
   //Orbit Line
-  let orbitMaterial = new THREE.LineBasicMaterial({ color:0xffffa1 });
-  let orbitCircle = new THREE.CircleGeometry(jsonObj.planets[num].distanceFromSun/jsonObj.distanceScale, 100);
+  let orbitMaterial = new THREE.LineBasicMaterial({ color: 0xffffa1 });
+  let orbitCircle = new THREE.CircleGeometry(jsonObj.planets[num].distanceFromSun / jsonObj.distanceScale, 100);
   orbitCircle.vertices.shift();
   orbitCircle.rotateX(Math.PI * 0.5);
   orbitCircle.rotateZ(jsonObj.planets[num].orbitInclination);
 
-  orbitLines[num] = new THREE.LineLoop( orbitCircle, orbitMaterial);
+  orbitLines[num] = new THREE.LineLoop(orbitCircle, orbitMaterial);
   orbitLines[num].name = "oribitLine";
   originPoint.add(orbitLines[num]);
 
   //Add Moon
   //Note: Currently only for earth but could be altered to incoperate moons for any planet in the solar system
-  if (jsonObj.planets[num].moon){
+  if (jsonObj.planets[num].moon) {
 
     planetOrigins[num].add(moonPivot);
     moonPivot.add(moonOrigin);
 
-    moonObj.scale.set(jsonObj.planets[2].moon.radius/jsonObj.sizeScale,
-                      jsonObj.planets[2].moon.radius/jsonObj.sizeScale,
-                      jsonObj.planets[2].moon.radius/jsonObj.sizeScale);
+    moonObj.scale.set(jsonObj.planets[2].moon.radius / jsonObj.sizeScale,
+      jsonObj.planets[2].moon.radius / jsonObj.sizeScale,
+      jsonObj.planets[2].moon.radius / jsonObj.sizeScale);
 
     //Get the size of the planet to determin radius
-    let planetBox = new THREE.Box3().setFromObject( planets[num] );
+    let planetBox = new THREE.Box3().setFromObject(planets[num]);
     let boxSize = new THREE.Vector3();
     planetBox.getSize(boxSize);
-    moonOrigin.position.x = boxSize.x/2 + jsonObj.planets[2].moon.distanceFromEarth/jsonObj.distanceScale;
+    moonOrigin.position.x = boxSize.x / 2 + jsonObj.planets[2].moon.distanceFromEarth / jsonObj.distanceScale;
 
     moonOrigin.add(moonObj);
     moonObj.rotateZ(jsonObj.planets[2].moon.rotationAngle);
@@ -344,39 +356,41 @@ function onError(error) {
 => Load and place all UI elements to their proper positions
 => Create and place Textbox
 ******************************************************************/
-function loadUI(){
+function loadUI() {
   uiPlanetIndex = jsonObj.planet_index;
-  let alertGeometry = new THREE.PlaneGeometry(.15,.15, .05);
+  let alertGeometry = new THREE.PlaneGeometry(.15, .15, .05);
   var alertTexture = new THREE.TextureLoader().load("./model/UI-Textures/Anchor.png");
 
-  let alertMaterial = new THREE.MeshBasicMaterial({map: alertTexture});
+  let alertMaterial = new THREE.MeshBasicMaterial({ map: alertTexture, transparent: true });
   anchorAlert = new THREE.Mesh(alertGeometry, alertMaterial);
+  anchorAlert.renderOrder = 999;
   anchorAlert.position.x = 0.0;
   anchorAlert.position.y = .25;
   anchorAlert.position.z = -.50;
   camera.add(anchorAlert);
 
-  let collisionGeometry = new THREE.PlaneGeometry(.1,.1, .05);
+  let collisionGeometry = new THREE.PlaneGeometry(.1, .1, .05);
   var collisionTexture = new THREE.TextureLoader().load("./model/UI-Textures/Collision_Alert.png");
 
-  let collisionMaterial = new THREE.MeshBasicMaterial({map: collisionTexture});
+  let collisionMaterial = new THREE.MeshBasicMaterial({ map: collisionTexture, transparent: true });
   collisionAlert = new THREE.Mesh(collisionGeometry, collisionMaterial);
+  collisionAlert.renderOrder = 999;
   collisionAlert.position.x = 0.0;
   collisionAlert.position.y = .25;
   collisionAlert.position.z = 1.0;
   collisionAlert.visible = false;
   camera.add(collisionAlert);
 
-  for (let i=0; i< jsonObj.ui_size ; i++){
-    let uiGeometry = new THREE.PlaneGeometry( .05,.05,.05 );
-    var uiTexture = new THREE.TextureLoader().load( jsonObj.ui[i].texture );
-    //let uiTexture = new THREE.ImageUtils.loadTexture(jsonObj.ui[i].texture);
-    let uiMaterial = new THREE.MeshBasicMaterial( {map: uiTexture} );     //UI box
-    uiOptions[i] = new THREE.Mesh( uiGeometry, uiMaterial );
+  for (let i = 0; i < jsonObj.ui_size; i++) {
+    let uiGeometry = new THREE.PlaneGeometry(.05, .05, .05);
+    var uiTexture = new THREE.TextureLoader().load(jsonObj.ui[i].texture);
+    let uiMaterial = new THREE.MeshBasicMaterial({ map: uiTexture, transparent: true });
+    uiOptions[i] = new THREE.Mesh(uiGeometry, uiMaterial);
+    uiOptions[i].renderOrder = 999;
     uiOptions[i].name = jsonObj.ui[i].name;
-    if (i == 0){
+    if (i == 0) {
       uiOptions[i].position.x = jsonObj.ui[i].position.x;
-    } else if (i==2){
+    } else if (i == 2) {
       uiOptions[i].position.x = jsonObj.ui[i].position.x;
     } else {
       uiOptions[i].position.x = 1.0;
@@ -386,11 +400,12 @@ function loadUI(){
     camera.add(uiOptions[i]);
   }
 
-  for(let i=0; i< jsonObj.ui[uiPlanetIndex].size ; i++){
-    let uiGeometry = new THREE.PlaneGeometry( .07,.05,.05 );
+  for (let i = 0; i < jsonObj.ui[uiPlanetIndex].size; i++) {
+    let uiGeometry = new THREE.PlaneGeometry(.07, .05, .05);
     let uiTexture = new THREE.ImageUtils.loadTexture(jsonObj.ui[uiPlanetIndex].options[i].texture);
-    let uiMaterial = new THREE.MeshBasicMaterial(  {map: uiTexture} );
-    planetOptions[i]= new THREE.Mesh(uiGeometry, uiMaterial);
+    let uiMaterial = new THREE.MeshBasicMaterial({ map: uiTexture, transparent: true });
+    planetOptions[i] = new THREE.Mesh(uiGeometry, uiMaterial);
+    planetOptions[i].renderOrder = 999;
     planetOptions[i].name = jsonObj.ui[uiPlanetIndex].options[i].name;
     planetOptions[i].position.x = 1.0;
     planetOptions[i].position.y += jsonObj.ui[uiPlanetIndex].options[i].position.y;
@@ -403,11 +418,13 @@ function loadUI(){
   let texture = new THREE.CanvasTexture(ctx.canvas);
   let boxMaterial = new THREE.MeshBasicMaterial({
     map: texture,
+    transparent: true
   });
 
-  let boxGeometry = new THREE.PlaneGeometry( .061, .05);
+  let boxGeometry = new THREE.PlaneGeometry(.061, .05);
 
   textBox = new THREE.Mesh(boxGeometry, boxMaterial);
+  textBox.renderOrder = 1000;
   textBox.position.y -= 0.055;
   textBox.position.z -= 0.1;
   camera.add(textBox);
@@ -423,9 +440,9 @@ function loadUI(){
 => Create local session
 => Establish EventListeners
 ******************************************************************/
-async function activateAR(){
-  try{
-    xrSession = await navigator.xr.requestSession('immersive-ar', {requiredFeatures: ['local', 'hit-test']});
+async function activateAR() {
+  try {
+    xrSession = await navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['local', 'hit-test'] });
 
     xrSession.addEventListener('select', touchSelectEvent);
     xrSession.addEventListener('end', onSessionEnd);
@@ -447,8 +464,8 @@ async function activateAR(){
     xrSession.requestAnimationFrame(renderXR);
     arActivated = true;
 
-  } catch (error){
-    console.log("Catch: "+ error);
+  } catch (error) {
+    console.log("Catch: " + error);
   }
 }
 
@@ -456,7 +473,7 @@ async function activateAR(){
 /*****************************************************************
   End Session
 *****************************************************************/
-function onSessionEnd(){
+function onSessionEnd() {
   console.log("SESSION ENDED");
 
   //Move user to the quiz
@@ -473,26 +490,26 @@ function onSessionEnd(){
 => Frame by Frame rendering
 => Show Reticle or Solar System
 ******************************************************************/
-function renderXR(timestamp, xrFrame){
+function renderXR(timestamp, xrFrame) {
 
-  if (!xrFrame || !xrSession || !arActivated){
+  if (!xrFrame || !xrSession || !arActivated) {
     return;
   }
 
   let pose = xrFrame.getViewerPose(xrRefSpace);
-  if (!pose){
+  if (!pose) {
     xrSession.requestAnimationFrame(renderXR);
     return;
   }
 
   //If solar system has not been placed, show a reticle to place it
-  if (!showSolarSystem){
+  if (!showSolarSystem) {
 
     createReticle();
 
-    if (xrHitTestSource && pose){
+    if (xrHitTestSource && pose) {
       let hitTestResults = xrFrame.getHitTestResults(xrHitTestSource);
-      if (hitTestResults.length > 0){
+      if (hitTestResults.length > 0) {
         console.log("raycast good");
         anchorAlert.position.z = 1.;
         let result = hitTestResults[0].getPose(xrRefSpace);
@@ -513,10 +530,10 @@ function renderXR(timestamp, xrFrame){
         let dist = reticlePos.distanceTo(cameraPos);
 
         //Limit distance to a range (0.5 - 0.8)
-        if (dist > 0.8){
+        if (dist > 0.8) {
           dist -= 0.8;
           reticle.translateOnAxis(dir, dist);
-        } else if (dist < 0.5){
+        } else if (dist < 0.5) {
           dist -= 0.5;
           reticle.translateOnAxis(dir, dist);
         }
@@ -532,7 +549,7 @@ function renderXR(timestamp, xrFrame){
     }
 
   } else {
-    if (reticle){
+    if (reticle) {
       reticle.visible = false;
       originPoint.visible = true;
     }
@@ -543,7 +560,7 @@ function renderXR(timestamp, xrFrame){
   let xrLayer = xrSession.renderState.baseLayer;
   renderer.setFramebuffer(xrLayer.framebuffer);
 
-  for (let xrView of pose.views){
+  for (let xrView of pose.views) {
     let viewport = xrLayer.getViewport(xrView);
     renderView(xrView, viewport);
   }
@@ -551,7 +568,7 @@ function renderXR(timestamp, xrFrame){
   xrSession.requestAnimationFrame(renderXR);
 }
 
-function renderView(xrView, viewport){
+function renderView(xrView, viewport) {
   renderer.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
   const viewMatrix = xrView.transform.inverse.matrix;
 
@@ -567,8 +584,8 @@ function renderView(xrView, viewport){
 /*****************************************************************
   Reticle
 ******************************************************************/
-function createReticle(){
-  if (reticle){
+function createReticle() {
+  if (reticle) {
     reticle.add(sunObj);
     sunObj.position.y = 0.2;
     sunObj.children[0].material.opacity = 0.2;
@@ -578,7 +595,7 @@ function createReticle(){
   reticle = new THREE.Object3D();
 
   let ringGeometry = new THREE.RingGeometry(0.07, 0.09, 24, 1);
-  let ringMaterial = new THREE.MeshBasicMaterial({ color: 0xFF6600 });
+  let ringMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFF00 });
   ringGeometry.applyMatrix(new THREE.Matrix4().makeRotationX(THREE.Math.degToRad(-90)));
   let circle = new THREE.Mesh(ringGeometry, ringMaterial);
   circle.position.y = 0.03;
@@ -600,8 +617,8 @@ function createReticle(){
 => Move planet away / towards user when needed
 => Check if inside an Obj
 ******************************************************************/
-function animateScene(){
-  if (jsonObj.originReturn){
+function animateScene() {
+  if (jsonObj.originReturn) {
     returnToOrigin();
   } else {
     updateSun();
@@ -609,10 +626,10 @@ function animateScene(){
     updateMoon();
   }
   //checkInsideObject();
-  if(collisionAlert.visible){
+  if (collisionAlert.visible) {
     collisionAlert.position.z = -.5;
 
-  }else{
+  } else {
     collisionAlert.position.z = 1.0;
   }
 }
@@ -621,14 +638,14 @@ function animateScene(){
 /*****************************************************************
   Update Sun Position
 ******************************************************************/
-function updateSun(){
+function updateSun() {
   //Sun Rotation
-  if (sunObj && jsonObj.sun.moveRotate){
+  if (sunObj && jsonObj.sun.moveRotate) {
     sunObj.rotateY(jsonObj.sun.rotation / jsonObj.rotationScale);
   }
 
   //Move Sun towards User
-  if (jsonObj.sun.beingViewed && jsonObj.objTranslation.inTransit){
+  if (jsonObj.sun.beingViewed && jsonObj.objTranslation.inTransit) {
     sunTranslation();
   }
 }
@@ -641,8 +658,8 @@ function updateSun(){
 => Update planets and moon positions by a scaled factor
 => Run for 100 Frames
 ******************************************************************/
-function sunTranslation(){
-  if (jsonObj.objTranslation.timeStep > 0){
+function sunTranslation() {
+  if (jsonObj.objTranslation.timeStep > 0) {
 
     let distance;
     let originPos = new THREE.Vector3();
@@ -653,7 +670,7 @@ function sunTranslation(){
 
     originPoint.getWorldPosition(originPos);
 
-    if (!jsonObj.objTranslation.switchObj){
+    if (!jsonObj.objTranslation.switchObj) {
 
       //Get Percentage Scale
       let desiredScale = 0.0003;
@@ -661,20 +678,20 @@ function sunTranslation(){
       scaledPercent /= ((jsonObj.sun.radius / jsonObj.sizeScale) / 10);
 
       //Update Planet/Moon Position
-      for (let i=0; i<jsonObj.numPlanets; i++){
-        scene.attach( planetOrigins[i]);
+      for (let i = 0; i < jsonObj.numPlanets; i++) {
+        scene.attach(planetOrigins[i]);
         planetOrigins[i].getWorldPosition(planetPos);
         dir.subVectors(planetPos, originPos).normalize();
         distance = (jsonObj.planets[i].distanceFromSun / jsonObj.distanceScale) * 10;
         planetOrigins[i].position.add(dir.multiplyScalar(distance));
-        pivots[i].attach( planetOrigins[i]);
+        pivots[i].attach(planetOrigins[i]);
 
         //Scale Planet
         planets[i].scale.addScalar((jsonObj.planets[i].radius / jsonObj.sizeScale) * scaledPercent);
 
         //Update Moon
         //NOTE: Only applied to Earths moon
-        if (jsonObj.planets[i].moon){
+        if (jsonObj.planets[i].moon) {
           scene.attach(moonOrigin);
           moonOrigin.getWorldPosition(moonPos);
           planetOrigins[i].getWorldPosition(planetPos);
@@ -701,15 +718,15 @@ function sunTranslation(){
 
       jsonObj.objTranslation.timeStep--;
 
-    //Switching from solar obj to sun
+      //Switching from solar obj to sun
     } else {
 
-      for (let i=0; i<jsonObj.numPlanets; i++){
-        if (jsonObj.planets[i].switchingFrom){
+      for (let i = 0; i < jsonObj.numPlanets; i++) {
+        if (jsonObj.planets[i].switchingFrom) {
           switchTranslation(sunObj, jsonObj.sun.radius / jsonObj.sizeScale / 10, planets[i], jsonObj.planets[i].radius / jsonObj.sizeScale);
         }
-        if (jsonObj.planets[i].moon){
-          if (jsonObj.planets[i].moon.switchingFrom){
+        if (jsonObj.planets[i].moon) {
+          if (jsonObj.planets[i].moon.switchingFrom) {
             switchTranslation(sunObj, jsonObj.sun.radius / jsonObj.sizeScale / 10, moonObj, jsonObj.planets[i].moon.radius / jsonObj.sizeScale);
           }
         }
@@ -720,7 +737,7 @@ function sunTranslation(){
 
   } else {
 
-    if (jsonObj.objTranslation.switchObj){
+    if (jsonObj.objTranslation.switchObj) {
       jsonObj.objTranslation.switchObj = false;
     }
 
@@ -730,21 +747,21 @@ function sunTranslation(){
     //Reset Values
     jsonObj.sun.switchingFrom = false;
 
-    for (let i=0; i<jsonObj.numPlanets; i++){
-      if (!jsonObj.pause){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
+      if (!jsonObj.pause) {
         jsonObj.planets[i].moveOrbit = true;
 
-        if (jsonObj.planets[i].moon){
+        if (jsonObj.planets[i].moon) {
           jsonObj.planets[i].moon.moveOrbit = true;
         }
       }
 
-      if (jsonObj.planets[i].switchingFrom){
+      if (jsonObj.planets[i].switchingFrom) {
         jsonObj.planets[i].switchingFrom = false;
       }
 
-      if (jsonObj.planets[i].moon){
-        if (jsonObj.planets[i].moon.switchingFrom){
+      if (jsonObj.planets[i].moon) {
+        if (jsonObj.planets[i].moon.switchingFrom) {
           jsonObj.planets[i].moon.switchingFrom = false;
         }
       }
@@ -759,22 +776,22 @@ function sunTranslation(){
 /*****************************************************************
   Update Planet Position
 ******************************************************************/
-function updatePlanets(){
+function updatePlanets() {
   //Planet Rotation (rad/day)
-  for (let i=0; i<jsonObj.numPlanets; i++){
-    if (planets[i] && jsonObj.planets[i].moveRotate){
+  for (let i = 0; i < jsonObj.numPlanets; i++) {
+    if (planets[i] && jsonObj.planets[i].moveRotate) {
       planets[i].rotateY(jsonObj.planets[i].rotation / jsonObj.rotationScale);
     }
   }
 
-  for (let i=0; i<jsonObj.numPlanets; i++){
+  for (let i = 0; i < jsonObj.numPlanets; i++) {
     //Move Planet Towards User
-    if (jsonObj.planets[i].beingViewed && jsonObj.objTranslation.inTransit){
+    if (jsonObj.planets[i].beingViewed && jsonObj.objTranslation.inTransit) {
       planetTranslation(i);
 
-    //Planet Orbit
+      //Planet Orbit
     } else {
-      if (pivots[i] && jsonObj.planets[i].moveOrbit){
+      if (pivots[i] && jsonObj.planets[i].moveOrbit) {
         pivots[i].rotateY(jsonObj.planets[i].orbit / jsonObj.orbitScale);
       }
     }
@@ -789,9 +806,9 @@ function updatePlanets(){
 => Update planets and moon positions by a scaled factor
 => Run for 100 Frames
 ******************************************************************/
-function planetTranslation(num){
+function planetTranslation(num) {
 
-  if (jsonObj.objTranslation.timeStep > 0){
+  if (jsonObj.objTranslation.timeStep > 0) {
 
     let distance;
     let cameraPos = new THREE.Vector3();
@@ -801,7 +818,7 @@ function planetTranslation(num){
     let dir = new THREE.Vector3();
 
     //Check to see if switching between solar objects
-    if (!jsonObj.objTranslation.switchObj){
+    if (!jsonObj.objTranslation.switchObj) {
 
       let desiredScale = 0.0003;
       let scaledPercent = (desiredScale - (jsonObj.planets[num].radius / jsonObj.sizeScale)) / 100;
@@ -815,14 +832,14 @@ function planetTranslation(num){
       originPoint.translateOnAxis(dir, distance);
 
       //Update Planet Position
-      for (let i=0; i<jsonObj.numPlanets; i++){
-        scene.attach( planetOrigins[i]);
+      for (let i = 0; i < jsonObj.numPlanets; i++) {
+        scene.attach(planetOrigins[i]);
         originPoint.getWorldPosition(originPos);
         planetOrigins[i].getWorldPosition(planetPos);
         dir.subVectors(planetPos, originPos).normalize();
         distance = (jsonObj.planets[i].distanceFromSun / jsonObj.distanceScale) * 10;
         planetOrigins[i].position.add(dir.multiplyScalar(distance));
-        pivots[i].attach( planetOrigins[i]);
+        pivots[i].attach(planetOrigins[i]);
 
         planets[i].scale.addScalar((jsonObj.planets[i].radius / jsonObj.sizeScale) * scaledPercent);
       }
@@ -851,19 +868,19 @@ function planetTranslation(num){
 
       jsonObj.objTranslation.timeStep--;
 
-    //Switching between different solar objs
+      //Switching between different solar objs
     } else {
 
-      if (jsonObj.sun.switchingFrom){
+      if (jsonObj.sun.switchingFrom) {
         switchTranslation(planets[num], jsonObj.planets[num].radius / jsonObj.sizeScale, sunObj, jsonObj.sun.radius / jsonObj.sizeScale / 10);
 
       } else {
-        for (let i=0; i<jsonObj.numPlanets; i++){
-          if (jsonObj.planets[i].switchingFrom){
+        for (let i = 0; i < jsonObj.numPlanets; i++) {
+          if (jsonObj.planets[i].switchingFrom) {
             switchTranslation(planets[num], jsonObj.planets[num].radius / jsonObj.sizeScale, planetOrigins[i], jsonObj.planets[i].radius / jsonObj.sizeScale);
           }
-          if (jsonObj.planets[i].moon){
-            if (jsonObj.planets[i].moon.switchingFrom){
+          if (jsonObj.planets[i].moon) {
+            if (jsonObj.planets[i].moon.switchingFrom) {
               switchTranslation(planets[num], jsonObj.planets[num].radius / jsonObj.sizeScale, moonObj, jsonObj.planets[i].moon.radius / jsonObj.sizeScale);
             }
           }
@@ -890,21 +907,21 @@ function planetTranslation(num){
     //Reset Values
     jsonObj.sun.switchingFrom = false;
 
-    for (let i=0; i<jsonObj.numPlanets; i++){
-      if (!jsonObj.pause){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
+      if (!jsonObj.pause) {
         jsonObj.planets[i].moveOrbit = true;
 
-        if (jsonObj.planets[i].moon){
+        if (jsonObj.planets[i].moon) {
           jsonObj.planets[i].moon.moveOrbit = true;
         }
       }
 
-      if (jsonObj.planets[i].switchingFrom){
+      if (jsonObj.planets[i].switchingFrom) {
         jsonObj.planets[i].switchingFrom = false;
       }
 
-      if (jsonObj.planets[i].moon){
-        if (jsonObj.planets[i].moon.switchingFrom){
+      if (jsonObj.planets[i].moon) {
+        if (jsonObj.planets[i].moon.switchingFrom) {
           jsonObj.planets[i].moon.switchingFrom = false;
         }
       }
@@ -916,25 +933,25 @@ function planetTranslation(num){
 }
 
 
-function updateMoon(){
+function updateMoon() {
   //Moon Rotation
-  if (moonObj && jsonObj.planets[2].moon.moveRotate){
+  if (moonObj && jsonObj.planets[2].moon.moveRotate) {
     moonObj.rotateY(jsonObj.planets[2].moon.rotation / jsonObj.rotationScale);
   }
 
   //Move moon towards user
-  if (jsonObj.planets[2].moon.beingViewed){
-    if (jsonObj.objTranslation.inTransit){
+  if (jsonObj.planets[2].moon.beingViewed) {
+    if (jsonObj.objTranslation.inTransit) {
       moonTraslation();
 
-    //Orbit Moon around Earth while viewing Earth
-    } else if (!jsonObj.objTranslation.inTransit && sunLight.visible && jsonObj.planets[2].moon.moveOrbit){
-        moonPivot.rotateY(jsonObj.planets[2].moon.orbit / jsonObj.orbitScale);
+      //Orbit Moon around Earth while viewing Earth
+    } else if (!jsonObj.objTranslation.inTransit && sunLight.visible && jsonObj.planets[2].moon.moveOrbit) {
+      moonPivot.rotateY(jsonObj.planets[2].moon.orbit / jsonObj.orbitScale);
     }
 
-  //Moon Orbit
+    //Moon Orbit
   } else {
-    if (moonPivot && jsonObj.planets[2].moon.moveOrbit){
+    if (moonPivot && jsonObj.planets[2].moon.moveOrbit) {
       moonPivot.rotateY(jsonObj.planets[2].moon.orbit / jsonObj.orbitScale);
     }
   }
@@ -949,9 +966,9 @@ function updateMoon(){
 => Run for 100 Frames
 ******************************************************************/
 //Note: Designed Only For Earths Moon
-function moonTraslation(){
+function moonTraslation() {
 
-  if (jsonObj.objTranslation.timeStep > 0){
+  if (jsonObj.objTranslation.timeStep > 0) {
 
     let distance;
     let cameraPos = new THREE.Vector3();
@@ -960,7 +977,7 @@ function moonTraslation(){
     let moonPos = new THREE.Vector3();
     let dir = new THREE.Vector3();
 
-    if (!jsonObj.objTranslation.switchObj){
+    if (!jsonObj.objTranslation.switchObj) {
 
       let desiredScale = 0.0003;
       let scaledPercent = (desiredScale - (jsonObj.planets[2].moon.radius / jsonObj.sizeScale)) / 100;
@@ -975,14 +992,14 @@ function moonTraslation(){
       originPoint.translateOnAxis(dir, distance);
 
       //Update Planet Position Away From The Origin
-      for (let i=0; i<jsonObj.numPlanets; i++){
-        scene.attach( planetOrigins[i]);
+      for (let i = 0; i < jsonObj.numPlanets; i++) {
+        scene.attach(planetOrigins[i]);
         originPoint.getWorldPosition(originPos);
         planetOrigins[i].getWorldPosition(planetPos);
         dir.subVectors(planetPos, originPos).normalize();
         distance = (jsonObj.planets[i].distanceFromSun / jsonObj.distanceScale) * 10;
         planetOrigins[i].position.add(dir.multiplyScalar(distance));
-        pivots[i].attach( planetOrigins[i]);
+        pivots[i].attach(planetOrigins[i]);
 
         // //Scale SolarSystem
         planets[i].scale.addScalar((jsonObj.planets[i].radius / jsonObj.sizeScale) * scaledPercent);
@@ -1014,15 +1031,15 @@ function moonTraslation(){
 
       jsonObj.objTranslation.timeStep--;
 
-    //Swicthing between different solar objs
+      //Swicthing between different solar objs
     } else {
 
-      if (jsonObj.sun.switchingFrom){
+      if (jsonObj.sun.switchingFrom) {
         switchTranslation(moonObj, jsonObj.planets[2].moon.radius / jsonObj.sizeScale, sunObj, jsonObj.sun.radius / jsonObj.sizeScale / 10);
 
       } else {
-        for (let i=0; i<jsonObj.numPlanets; i++){
-          if (jsonObj.planets[i].switchingFrom){
+        for (let i = 0; i < jsonObj.numPlanets; i++) {
+          if (jsonObj.planets[i].switchingFrom) {
             switchTranslation(moonObj, jsonObj.planets[2].moon.radius / jsonObj.sizeScale, planets[i], jsonObj.planets[i].radius / jsonObj.sizeScale);
           }
         }
@@ -1054,21 +1071,21 @@ function moonTraslation(){
     //Reset Values
     jsonObj.sun.switchingFrom = false;
 
-    for (let i=0; i<jsonObj.numPlanets; i++){
-      if (!jsonObj.pause){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
+      if (!jsonObj.pause) {
         jsonObj.planets[i].moveOrbit = true;
 
-        if (jsonObj.planets[i].moon){
+        if (jsonObj.planets[i].moon) {
           jsonObj.planets[i].moon.moveOrbit = true;
         }
       }
 
-      if (jsonObj.planets[i].switchingFrom){
+      if (jsonObj.planets[i].switchingFrom) {
         jsonObj.planets[i].switchingFrom = false;
       }
 
-      if (jsonObj.planets[i].moon){
-        if (jsonObj.planets[i].moon.switchingFrom){
+      if (jsonObj.planets[i].moon) {
+        if (jsonObj.planets[i].moon.switchingFrom) {
           jsonObj.planets[i].moon.switchingFrom = false;
         }
       }
@@ -1087,7 +1104,7 @@ function moonTraslation(){
 => scale all solar objs based upon percentage change from the targetObj
 => Run for 100 Frames
 ******************************************************************/
-function switchTranslation(target, targetScale, preObj, preObjScale){
+function switchTranslation(target, targetScale, preObj, preObjScale) {
 
   let planetNum;
   let preSunSize;
@@ -1112,32 +1129,32 @@ function switchTranslation(target, targetScale, preObj, preObjScale){
   preSunSize += ((jsonObj.sun.radius / jsonObj.sizeScale / 10) * preScalePercent) * 100;
 
   //Get the previous scale of all the planets
-  for (let i=0; i<jsonObj.numPlanets; i++){
+  for (let i = 0; i < jsonObj.numPlanets; i++) {
     prePlanetSize[i] = jsonObj.planets[i].radius / jsonObj.sizeScale;
 
     //Get the previous size of the moon
     //Note: applied only to Earths moon
-    if (jsonObj.planets[i].moon){
+    if (jsonObj.planets[i].moon) {
       preMoonSize = jsonObj.planets[i].moon.radius / jsonObj.sizeScale;
     }
 
     prePlanetSize[i] += ((jsonObj.planets[i].radius / jsonObj.sizeScale) * preScalePercent) * 100;
 
-    if (jsonObj.planets[i].moon){
+    if (jsonObj.planets[i].moon) {
       preMoonSize += ((jsonObj.planets[i].moon.radius / jsonObj.sizeScale) * preScalePercent) * 100;
     }
   }
 
   //Check what the target is
-  if (target == sunObj ){
+  if (target == sunObj) {
     scaledPercent = desiredScale - preSunSize;
     scaledPercent /= 100;
 
     //This is the percentage change that will be applied to the solar system
     scaledPercent /= preSunSize;
 
-  //Note Only applied to Earths Moon
-  } else if (target == moonObj){
+    //Note Only applied to Earths Moon
+  } else if (target == moonObj) {
     scaledPercent = desiredScale - preMoonSize;
     scaledPercent /= 100;
 
@@ -1146,8 +1163,8 @@ function switchTranslation(target, targetScale, preObj, preObjScale){
 
   } else {
 
-    for (let i=0; i<jsonObj.numPlanets; i++){
-      if (target == planets[i]){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
+      if (target == planets[i]) {
         planetNum = i;
         scaledPercent = desiredScale - prePlanetSize[i];
         scaledPercent /= 100;
@@ -1164,11 +1181,11 @@ function switchTranslation(target, targetScale, preObj, preObjScale){
   }
 
   //Scale Planets
-  for (let i=0; i<jsonObj.numPlanets; i++){
+  for (let i = 0; i < jsonObj.numPlanets; i++) {
     planets[i].scale.addScalar(prePlanetSize[i] * scaledPercent);
 
     //Scale moon
-    if (jsonObj.planets[i].moon){
+    if (jsonObj.planets[i].moon) {
       moonObj.scale.addScalar(preMoonSize * scaledPercent);
     }
   }
@@ -1178,7 +1195,7 @@ function switchTranslation(target, targetScale, preObj, preObjScale){
   camera.getWorldPosition(cameraPos);
 
   //Sun
-  if (target == sunObj){
+  if (target == sunObj) {
     originPoint.getWorldPosition(targetPos);
     box.setFromObject(sunObj);
   }
@@ -1191,7 +1208,7 @@ function switchTranslation(target, targetScale, preObj, preObjScale){
 
 
   //Moon
-  if (target == moonObj){
+  if (target == moonObj) {
     moonOrigin.getWorldPosition(targetPos);
     box.setFromObject(moonObj);
   }
@@ -1212,8 +1229,8 @@ function switchTranslation(target, targetScale, preObj, preObjScale){
 => Update planets and moon positions by JSON value
 => Run for 100 Frames
 ******************************************************************/
-function returnToOrigin(){
-  if (jsonObj.objTranslation.timeStep > 0){
+function returnToOrigin() {
+  if (jsonObj.objTranslation.timeStep > 0) {
 
     let distance;
     let reduceScale;
@@ -1226,15 +1243,15 @@ function returnToOrigin(){
     originPoint.getWorldPosition(originPos);
 
     //Planets
-    for (let i=0; i<jsonObj.numPlanets; i++){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
       //Rotate Planets
-      if (planets[i] && jsonObj.planets[i].moveRotate){
+      if (planets[i] && jsonObj.planets[i].moveRotate) {
         planets[i].rotateY(jsonObj.planets[i].rotation / jsonObj.rotationScale);
       }
 
-      if (jsonObj.objTranslation.timeStep == 1){
+      if (jsonObj.objTranslation.timeStep == 1) {
         //Snap to propper position in final timeStep
-        scene.attach( planetOrigins[i]);
+        scene.attach(planetOrigins[i]);
         planetOrigins[i].getWorldPosition(planetPos);
 
         //Direction
@@ -1243,10 +1260,10 @@ function returnToOrigin(){
         //Distance
         distance = planetPos.distanceTo(originPos) - (jsonObj.planets[i].distanceFromSun / jsonObj.distanceScale);
         planetOrigins[i].position.sub(dir.multiplyScalar(distance));
-        pivots[i].attach( planetOrigins[i]);
+        pivots[i].attach(planetOrigins[i]);
 
       } else {
-        scene.attach( planetOrigins[i]);
+        scene.attach(planetOrigins[i]);
         planetOrigins[i].getWorldPosition(planetPos);
 
         //Direction
@@ -1256,28 +1273,28 @@ function returnToOrigin(){
         distance = planetPos.distanceTo(originPos) - (jsonObj.planets[i].distanceFromSun / jsonObj.distanceScale);
         distance /= jsonObj.objTranslation.timeStep;
         planetOrigins[i].position.sub(dir.multiplyScalar(distance));
-        pivots[i].attach( planetOrigins[i]);
+        pivots[i].attach(planetOrigins[i]);
       }
 
-      reduceScale = (planets[i].scale.x - jsonObj.planets[i].radius/jsonObj.sizeScale) / jsonObj.objTranslation.timeStep;
+      reduceScale = (planets[i].scale.x - jsonObj.planets[i].radius / jsonObj.sizeScale) / jsonObj.objTranslation.timeStep;
       planets[i].scale.subScalar(reduceScale);
     }
 
     //Sun
     //Rotate Sun
-    if (sunObj && jsonObj.sun.moveRotate){
+    if (sunObj && jsonObj.sun.moveRotate) {
       sunObj.rotateY(jsonObj.sun.rotation / jsonObj.rotationScale);
     }
-    reduceScale = (sunObj.scale.x - jsonObj.sun.radius/jsonObj.sizeScale/10) / jsonObj.objTranslation.timeStep;
+    reduceScale = (sunObj.scale.x - jsonObj.sun.radius / jsonObj.sizeScale / 10) / jsonObj.objTranslation.timeStep;
     sunObj.scale.subScalar(reduceScale);
 
     //Moon
     //Rotate Moon
-    if (moonObj && jsonObj.planets[2].moon.moveRotate){
+    if (moonObj && jsonObj.planets[2].moon.moveRotate) {
       moonObj.rotateY(jsonObj.planets[2].moon.rotation / jsonObj.rotationScale);
     }
 
-    if (jsonObj.objTranslation.timeStep == 1){
+    if (jsonObj.objTranslation.timeStep == 1) {
       scene.attach(moonOrigin);
 
       //Direction
@@ -1286,9 +1303,9 @@ function returnToOrigin(){
       dir.subVectors(moonPos, planetPos).normalize();
 
       //Distance
-      let planetBox = new THREE.Box3().setFromObject( planets[2] );
+      let planetBox = new THREE.Box3().setFromObject(planets[2]);
 
-      distance = moonPos.distanceTo(planetPos) - (planetBox.getSize().x/2 + jsonObj.planets[2].moon.distanceFromEarth / jsonObj.distanceScale);
+      distance = moonPos.distanceTo(planetPos) - (planetBox.getSize().x / 2 + jsonObj.planets[2].moon.distanceFromEarth / jsonObj.distanceScale);
       moonOrigin.position.sub(dir.multiplyScalar(distance));
 
       moonPivot.attach(moonOrigin);
@@ -1309,7 +1326,7 @@ function returnToOrigin(){
     }
 
     //Scale
-    reduceScale = (moonObj.scale.x - jsonObj.planets[2].moon.radius/jsonObj.sizeScale) / jsonObj.objTranslation.timeStep;
+    reduceScale = (moonObj.scale.x - jsonObj.planets[2].moon.radius / jsonObj.sizeScale) / jsonObj.objTranslation.timeStep;
     moonObj.scale.subScalar(reduceScale);
 
     //Origin
@@ -1330,21 +1347,21 @@ function returnToOrigin(){
     originPoint.position.copy(placementPos);
 
     //Reset Values
-    for (let i=0; i<jsonObj.numPlanets; i++){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
       jsonObj.planets[i].beingViewed = false;
 
-      if (!jsonObj.pause){
+      if (!jsonObj.pause) {
         jsonObj.planets[i].moveOrbit = true;
       }
 
-      if (jsonObj.planets[i].moon){
+      if (jsonObj.planets[i].moon) {
         jsonObj.planets[i].moon.beingViewed = false;
-        if (!jsonObj.pause){
+        if (!jsonObj.pause) {
           jsonObj.planets[i].moon.moveOrbit = true;
         }
       }
 
-      if (jsonObj.showPlanetLines){
+      if (jsonObj.showPlanetLines) {
         orbitLines[i].visible = true;
       }
     }
@@ -1399,7 +1416,7 @@ function returnToOrigin(){
   Scene Event Handlers
 ******************************************************************/
 function touchSelectEvent() {
-  if (showSolarSystem){
+  if (showSolarSystem) {
 
     //Get ray position and direction based upon where the screen was touched
     let inputPose = event.frame.getPose(event.inputSource.targetRaySpace, xrRefSpace);
@@ -1419,29 +1436,29 @@ function touchSelectEvent() {
       //Check if ray intercepted and touchable objs
       let intersects = sceneRaycaster.intersectObjects(menuIntersectsArray, true);
 
-      if (intersects.length > 0){
+      if (intersects.length > 0) {
         menuEvent(intersects);
 
       } else {
         let intersects = sceneRaycaster.intersectObjects(sceneIntersectsArray, true);
-        if (intersects.length > 0){
+        if (intersects.length > 0) {
 
           //Check for sun
-          if (intersects[0].object.parent.name == "Sun"){
+          if (intersects[0].object.parent.name == "Sun") {
             sceneEvent(intersects, "Sun");
 
             //Check for moon
-          } else if (intersects[0].object.parent.name == "Moon"){
+          } else if (intersects[0].object.parent.name == "Moon") {
             sceneEvent(intersects, "Moon");
 
-          //Check for planets
+            //Check for planets
           } else {
 
-            for (let i=0; i<jsonObj.numPlanets; i++){
-              if (intersects[0].object.children[0] == planets[i]){
+            for (let i = 0; i < jsonObj.numPlanets; i++) {
+              if (intersects[0].object.children[0] == planets[i]) {
                 sceneEvent(intersects, planets[i].name);
 
-              } else if (intersects[0].object.parent == planets[i]){
+              } else if (intersects[0].object.parent == planets[i]) {
                 sceneEvent(intersects, planets[i].name);
               }
             }
@@ -1451,7 +1468,7 @@ function touchSelectEvent() {
     }
 
   } else {
-    if (reticle.visible){
+    if (reticle.visible) {
       showSolarSystem = true;
       sunObj.getWorldPosition(placementPos);
       sunObj.position.y = 0;
@@ -1461,7 +1478,7 @@ function touchSelectEvent() {
       scene.add(originPoint);
       originPoint.position.copy(placementPos);
     } else {
-       console.log("cant place yet");
+      console.log("cant place yet");
     }
   }
 }
@@ -1470,9 +1487,9 @@ function touchSelectEvent() {
 /*****************************************************************
   Scene Object Events
 ******************************************************************/
-function sceneEvent(intersects, obj){
-  if (!jsonObj.objTranslation.inTransit){
-    switch(obj){
+function sceneEvent(intersects, obj) {
+  if (!jsonObj.objTranslation.inTransit) {
+    switch (obj) {
 
       case "Sun":
         toggleUIOptionsVisibilityOff();
@@ -1497,7 +1514,7 @@ function sceneEvent(intersects, obj){
         togglePlanetsOptionsVisibilityOff();
         planetSelect(2);
 
-        if (jsonObj.planets[2].beingViewed){
+        if (jsonObj.planets[2].beingViewed) {
           let point = planets[2].worldToLocal(intersects[0].point);
           checkEarthBoundingBoxs(point);
         }
@@ -1555,9 +1572,9 @@ function sceneEvent(intersects, obj){
 /*****************************************************************
   UI Object Events
 ******************************************************************/
-function menuEvent(intersects){
-  if (intersects[0].object.name){
-    switch(intersects[0].object.name){
+function menuEvent(intersects) {
+  if (intersects[0].object.name) {
+    switch (intersects[0].object.name) {
 
       case "Drawer":
         minimizeTextBox(true);
@@ -1602,7 +1619,7 @@ function menuEvent(intersects){
         break;
 
       case "RotationSpeed":
-        switch (jsonObj.rotationScale){
+        switch (jsonObj.rotationScale) {
           //Fast Speed
           case 1:
             jsonObj.rotationScale = 100;
@@ -1661,7 +1678,7 @@ function menuEvent(intersects){
         toggleUIOptionsVisibilityOff();
         planetSelect(2);
 
-        if (jsonObj.planets[2].beingViewed){
+        if (jsonObj.planets[2].beingViewed) {
           let point = planets[2].worldToLocal(intersects[0].point);
 
           checkEarthBoundingBoxs(point);
@@ -1720,7 +1737,7 @@ function menuEvent(intersects){
 
       case "textBox":
         //Check if minimized
-        if (textBox.position.y == -0.0855){
+        if (textBox.position.y == -0.0855) {
           minimizeTextBox(false);
         } else {
           minimizeTextBox(true);
@@ -1740,21 +1757,21 @@ function menuEvent(intersects){
 => Grab random fun fact from JSON
 => Set varibles so appropriate action can be taken to move towards user
 *******************************************************************/
-function sunSelect(){
+function sunSelect() {
   //Pick random fact
   let ranNum = Math.floor(Math.random() * 5);
 
   updateCanvasTexture(sunObj, jsonObj.sun.facts[ranNum]);
 
-  if (!jsonObj.sun.beingViewed){
+  if (!jsonObj.sun.beingViewed) {
 
     //Hide textBox for transition
     textBox.visible = false;
     minimizeTextBox(false);
 
-    for (let i=0; i<jsonObj.numPlanets; i++){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
 
-      if (jsonObj.planets[i].beingViewed){
+      if (jsonObj.planets[i].beingViewed) {
         jsonObj.objTranslation.switchObj = true;
         jsonObj.planets[i].switchingFrom = true;
 
@@ -1764,8 +1781,8 @@ function sunSelect(){
         pivots[i].attach(planetOrigins[i]);
       }
 
-      if (jsonObj.planets[i].moon){
-        if (jsonObj.planets[i].moon.beingViewed){
+      if (jsonObj.planets[i].moon) {
+        if (jsonObj.planets[i].moon.beingViewed) {
           jsonObj.objTranslation.switchObj = true;
           jsonObj.planets[i].moon.switchingFrom = true;
 
@@ -1782,14 +1799,14 @@ function sunSelect(){
 
       jsonObj.planets[i].beingViewed = false;
       jsonObj.planets[i].moveOrbit = false;
-      if ( jsonObj.planets[i].moon ){
+      if (jsonObj.planets[i].moon) {
         jsonObj.planets[i].moon.beingViewed = false;
         jsonObj.planets[i].moon.moveOrbit = false;
       }
 
-        if (jsonObj.showPlanetLines){
-          orbitLines[i].visible = false;
-        }
+      if (jsonObj.showPlanetLines) {
+        orbitLines[i].visible = false;
+      }
     }
 
     jsonObj.sun.beingViewed = true;
@@ -1803,7 +1820,7 @@ function sunSelect(){
   }
 }
 
-function planetSelect(num){
+function planetSelect(num) {
 
   //Pick random fact
   let ranNum = Math.floor(Math.random() * 5);
@@ -1812,20 +1829,20 @@ function planetSelect(num){
 
   updateCanvasTexture(planets[num], jsonObj.planets[num].facts[ranNum]);
 
-  if (!jsonObj.planets[num].beingViewed){
+  if (!jsonObj.planets[num].beingViewed) {
 
     //Hide textBox for transition
     textBox.visible = false;
     minimizeTextBox(false);
 
-    if (jsonObj.sun.beingViewed){
+    if (jsonObj.sun.beingViewed) {
       jsonObj.objTranslation.switchObj = true;
       jsonObj.sun.switchingFrom = true;
     }
 
-    for (let i=0; i<jsonObj.numPlanets; i++){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
 
-      if (jsonObj.planets[i].beingViewed){
+      if (jsonObj.planets[i].beingViewed) {
         jsonObj.objTranslation.switchObj = true;
         jsonObj.planets[i].switchingFrom = true;
 
@@ -1835,8 +1852,8 @@ function planetSelect(num){
         pivots[i].attach(planetOrigins[i]);
       }
 
-      if (jsonObj.planets[i].moon){
-        if (jsonObj.planets[i].moon.beingViewed){
+      if (jsonObj.planets[i].moon) {
+        if (jsonObj.planets[i].moon.beingViewed) {
           jsonObj.objTranslation.switchObj = true;
           jsonObj.planets[i].moon.switchingFrom = true;
 
@@ -1852,12 +1869,12 @@ function planetSelect(num){
 
       jsonObj.planets[i].beingViewed = false;
       jsonObj.planets[i].moveOrbit = false;
-      if ( jsonObj.planets[i].moon ){
+      if (jsonObj.planets[i].moon) {
         jsonObj.planets[i].moon.beingViewed = false;
         jsonObj.planets[i].moon.moveOrbit = false;
       }
 
-      if (jsonObj.showPlanetLines){
+      if (jsonObj.showPlanetLines) {
         orbitLines[i].visible = false;
       }
     }
@@ -1875,27 +1892,27 @@ function planetSelect(num){
 }
 
 //NOTE: moonSelect is configured only for earths moon
-function moonSelect(){
+function moonSelect() {
 
   //Pick random fact
   let ranNum = Math.floor(Math.random() * 5);
 
   updateCanvasTexture(moonObj, jsonObj.planets[2].moon.facts[ranNum]);
 
-  if (!jsonObj.planets[2].moon.beingViewed){
+  if (!jsonObj.planets[2].moon.beingViewed) {
 
     //Hide textBox for transition
     textBox.visible = false;
     minimizeTextBox(false);
 
-    if (jsonObj.sun.beingViewed){
+    if (jsonObj.sun.beingViewed) {
       jsonObj.objTranslation.switchObj = true;
       jsonObj.sun.switchingFrom = true;
     }
 
-    for (let i=0; i<jsonObj.numPlanets; i++){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
 
-      if (jsonObj.planets[i].beingViewed){
+      if (jsonObj.planets[i].beingViewed) {
         jsonObj.objTranslation.switchObj = true;
         jsonObj.planets[i].switchingFrom = true;
 
@@ -1907,7 +1924,7 @@ function moonSelect(){
 
       jsonObj.planets[i].beingViewed = false;
       jsonObj.planets[i].moveOrbit = false;
-      if ( jsonObj.planets[i].moon ){
+      if (jsonObj.planets[i].moon) {
         jsonObj.planets[i].moon.beingViewed = false;
         jsonObj.planets[i].moon.moveOrbit = false;
 
@@ -1920,7 +1937,7 @@ function moonSelect(){
         jsonObj.planets[i].moon.distanceFromSun = moonPos.distanceTo(sunPos);
       }
 
-      if (jsonObj.showPlanetLines){
+      if (jsonObj.showPlanetLines) {
         orbitLines[i].visible = false;
       }
     }
@@ -1940,7 +1957,7 @@ function moonSelect(){
 
 
 //Earth Bounding Boxs
-function checkEarthBoundingBoxs(point){
+function checkEarthBoundingBoxs(point) {
 
   let antarcticaBox = new THREE.Box3();
   antarcticaBox.setFromPoints(jsonObj.continents[6].boundingBox);
@@ -1976,47 +1993,47 @@ function checkEarthBoundingBoxs(point){
   let asiaBox2 = new THREE.Box3();
   asiaBox2.setFromPoints(jsonObj.continents[4].boundingBox[1]);
 
-  if (antarcticaBox.containsPoint(point)){
+  if (antarcticaBox.containsPoint(point)) {
     continentObj.name = "Continent: Antarctica";
     updateCanvasTexture(continentObj, jsonObj.continents[6].fact);
 
-  } else if (australiaBox.containsPoint(point)){
+  } else if (australiaBox.containsPoint(point)) {
     continentObj.name = "Continent: Australia";
     updateCanvasTexture(continentObj, jsonObj.continents[5].fact);
 
-  } else if (europeBox.containsPoint(point)){
+  } else if (europeBox.containsPoint(point)) {
     continentObj.name = "Continent: Europe";
     updateCanvasTexture(continentObj, jsonObj.continents[2].fact);
 
-  } else if (africaBox1.containsPoint(point)){
+  } else if (africaBox1.containsPoint(point)) {
     continentObj.name = "Continent: Africa";
     updateCanvasTexture(continentObj, jsonObj.continents[3].fact);
 
-  } else if (africaBox2.containsPoint(point)){
+  } else if (africaBox2.containsPoint(point)) {
     continentObj.name = "Continent: Africa";
     updateCanvasTexture(continentObj, jsonObj.continents[3].fact);
 
-  } else if (southAmericaBox1.containsPoint(point)){
+  } else if (southAmericaBox1.containsPoint(point)) {
     continentObj.name = "Continent: South America";
     updateCanvasTexture(continentObj, jsonObj.continents[1].fact);
 
-  } else if (southAmericaBox2.containsPoint(point)){
+  } else if (southAmericaBox2.containsPoint(point)) {
     continentObj.name = "Continent: South America";
     updateCanvasTexture(continentObj, jsonObj.continents[1].fact);
 
-  } else if (northAmericaBox1.containsPoint(point)){
+  } else if (northAmericaBox1.containsPoint(point)) {
     continentObj.name = "Continent: North America";
     updateCanvasTexture(continentObj, jsonObj.continents[0].fact);
 
-  } else if (northAmericaBox2.containsPoint(point)){
+  } else if (northAmericaBox2.containsPoint(point)) {
     continentObj.name = "Continent: North America";
     updateCanvasTexture(continentObj, jsonObj.continents[0].fact);
 
-  } else if (asiaBox1.containsPoint(point)){
+  } else if (asiaBox1.containsPoint(point)) {
     continentObj.name = "Continent: Asia";
     updateCanvasTexture(continentObj, jsonObj.continents[4].fact);
 
-  } else if (asiaBox2.containsPoint(point)){
+  } else if (asiaBox2.containsPoint(point)) {
     continentObj.name = "Continent: Asia";
     updateCanvasTexture(continentObj, jsonObj.continents[4].fact);
 
@@ -2030,15 +2047,15 @@ function checkEarthBoundingBoxs(point){
   UI Helper Functions
 *****************************************************************/
 //Open Drawer
-function toggleUIOptionsVisibility(){
+function toggleUIOptionsVisibility() {
   uiOptionsVisible = !uiOptionsVisible;
 
-  for(let i=1; i<jsonObj.ui_size; i++){
-    if(uiOptionsVisible && i!=6 && i!=7){
+  for (let i = 1; i < jsonObj.ui_size; i++) {
+    if (uiOptionsVisible && i != 6 && i != 7) {
       uiOptions[i].position.x = jsonObj.ui[i].position.x;
     } else {
-      if (i!=2 && i!=6 && i!=7)
-      uiOptions[i].position.x = 1.0;
+      if (i != 2 && i != 6 && i != 7)
+        uiOptions[i].position.x = 1.0;
     }
   }
 
@@ -2046,20 +2063,20 @@ function toggleUIOptionsVisibility(){
 }
 
 //Close Drawer
-function toggleUIOptionsVisibilityOff(){
+function toggleUIOptionsVisibilityOff() {
   uiOptionsVisible = false;
-  for(let i=1; i<jsonObj.ui_size; i++){
-    if(i!=2 && i!=7/*&& i!=6*/)
+  for (let i = 1; i < jsonObj.ui_size; i++) {
+    if (i != 2 && i != 7/*&& i!=6*/)
       uiOptions[i].position.x = 1.0;
   }
 }
 
 //Open Planet Drawer
-function togglePlanetsOptionsVisibility(){
+function togglePlanetsOptionsVisibility() {
   planetOptionsVisible = !planetOptionsVisible;
 
-  for(let i=0; i<jsonObj.ui[uiPlanetIndex].size; i++){
-    if(planetOptionsVisible){
+  for (let i = 0; i < jsonObj.ui[uiPlanetIndex].size; i++) {
+    if (planetOptionsVisible) {
       planetOptions[i].position.x = 0.05;
     } else {
       planetOptions[i].position.x = 1.0;
@@ -2068,16 +2085,16 @@ function togglePlanetsOptionsVisibility(){
 }
 
 //Close Planet Drawer
-function togglePlanetsOptionsVisibilityOff(){
+function togglePlanetsOptionsVisibilityOff() {
   planetOptionsVisible = false;
-  for(let i=0; i<jsonObj.ui[uiPlanetIndex].size; i++){
+  for (let i = 0; i < jsonObj.ui[uiPlanetIndex].size; i++) {
     planetOptions[i].position.x = 1.0;
   }
 }
 
 //Change Light
-function toggleLight(){
-  if (cameraLight.visible){
+function toggleLight() {
+  if (cameraLight.visible) {
     cameraLight.visible = false;
     sunLight.visible = true;
 
@@ -2088,34 +2105,34 @@ function toggleLight(){
 }
 
 //Change OrbitLines
-function toggleOrbitLines(){
-  if (jsonObj.showPlanetLines){
+function toggleOrbitLines() {
+  if (jsonObj.showPlanetLines) {
     jsonObj.showPlanetLines = false;
-    for (var i=0; i<jsonObj.numPlanets; i++){
+    for (var i = 0; i < jsonObj.numPlanets; i++) {
       orbitLines[i].visible = false;
     }
 
   } else {
     jsonObj.showPlanetLines = true;
-    for (var i=0; i<jsonObj.numPlanets; i++){
+    for (var i = 0; i < jsonObj.numPlanets; i++) {
       orbitLines[i].visible = true;
     }
   }
 }
 
 //Return To Origin
-function toggleReturnToOrigin(){
+function toggleReturnToOrigin() {
   //Reset Hierarchy
   scene.attach(originPoint);
 
-  for (let i=0; i<jsonObj.numPlanets; i++){
-    if (jsonObj.planets[i].beingViewed){
+  for (let i = 0; i < jsonObj.numPlanets; i++) {
+    if (jsonObj.planets[i].beingViewed) {
       planetOrigins[i].remove(sunPivot);
       pivots[i].attach(planetOrigins[i]);
     }
 
-    if (jsonObj.planets[i].moon){
-      if (jsonObj.planets[i].moon.beingViewed){
+    if (jsonObj.planets[i].moon) {
+      if (jsonObj.planets[i].moon.beingViewed) {
         planetOrigins[i].remove(sunPivot);
         pivots[i].attach(planetOrigins[i]);
         planetOrigins[i].add(moonPivot);
@@ -2133,72 +2150,72 @@ function toggleReturnToOrigin(){
 }
 
 //Pause or Unpause
-function togglePause(){
-  if (!jsonObj.pause){
+function togglePause() {
+  if (!jsonObj.pause) {
     //Pause
     jsonObj.pause = true;
     jsonObj.sun.moveRotate = false;
 
-    for (let i=0; i<jsonObj.numPlanets; i++){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
       jsonObj.planets[i].moveRotate = false;
       jsonObj.planets[i].moveOrbit = false;
 
-      if (jsonObj.planets[i].moon){
+      if (jsonObj.planets[i].moon) {
         jsonObj.planets[i].moon.moveRotate = false;
         jsonObj.planets[i].moon.moveOrbit = false;
       }
     }
     uiOptions[2].position.x = 1.0;
-    uiOptions[7].position.x =jsonObj.ui[7].position.x;
+    uiOptions[7].position.x = jsonObj.ui[7].position.x;
   } else {
     //UnPause
     jsonObj.pause = false;
     jsonObj.sun.moveRotate = true;
 
-    for (let i=0; i<jsonObj.numPlanets; i++){
-      if (!jsonObj.planets[i].beingViewed){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
+      if (!jsonObj.planets[i].beingViewed) {
         jsonObj.planets[i].moveRotate = true;
         jsonObj.planets[i].moveOrbit = true;
       } else {
         jsonObj.planets[i].moveRotate = true;
       }
 
-      if (jsonObj.planets[i].moon){
-        if (!jsonObj.planets[i].moon.beingViewed){
+      if (jsonObj.planets[i].moon) {
+        if (!jsonObj.planets[i].moon.beingViewed) {
           jsonObj.planets[i].moon.moveRotate = true;
           jsonObj.planets[i].moon.moveOrbit = true;
         }
       }
     }
     uiOptions[7].position.x = 1.0;
-    uiOptions[2].position.x =jsonObj.ui[2].position.x;
+    uiOptions[2].position.x = jsonObj.ui[2].position.x;
   }
 }
 
 //Reset SolarSystem
-function resetSolarSystem(){
+function resetSolarSystem() {
   textBox.visible = false;
 
-  if (jsonObj.sun.beingViewed){
+  if (jsonObj.sun.beingViewed) {
     scene.attach(originPoint);
-    for (let i=jsonObj.objTranslation.timeStep; i>-1; i--){
+    for (let i = jsonObj.objTranslation.timeStep; i > -1; i--) {
       returnToOrigin();
     }
   } else {
 
-    for (let i=0; i<jsonObj.numPlanets; i++){
-      if (jsonObj.planets[i].beingViewed){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
+      if (jsonObj.planets[i].beingViewed) {
         scene.attach(originPoint);
         planetOrigins[i].remove(sunPivot);
         pivots[i].attach(planetOrigins[i]);
 
-        for (let i=jsonObj.objTranslation.timeStep; i>-1; i--){
+        for (let i = jsonObj.objTranslation.timeStep; i > -1; i--) {
           returnToOrigin();
         }
       }
 
-      if (jsonObj.planets[i].moon){
-        if (jsonObj.planets[i].moon.beingViewed){
+      if (jsonObj.planets[i].moon) {
+        if (jsonObj.planets[i].moon.beingViewed) {
           scene.attach(originPoint);
           planetOrigins[i].remove(sunPivot);
           pivots[i].attach(planetOrigins[i]);
@@ -2206,7 +2223,7 @@ function resetSolarSystem(){
           moonPivot.position.set(0, 0, 0);
           moonPivot.attach(moonOrigin);
 
-          for (let i=jsonObj.objTranslation.timeStep; i>-1; i--){
+          for (let i = jsonObj.objTranslation.timeStep; i > -1; i--) {
             returnToOrigin();
           }
         }
@@ -2218,7 +2235,7 @@ function resetSolarSystem(){
 }
 
 //Update Textbox
-function updateCanvasTexture(obj, fact){
+function updateCanvasTexture(obj, fact) {
 
   //Create new canvas
   let ctx = document.createElement('canvas').getContext('2d');
@@ -2228,7 +2245,7 @@ function updateCanvasTexture(obj, fact){
 
   let scale = window.devicePixelRatio;
 
-  if (!scale){
+  if (!scale) {
     scale = 1;
   }
 
@@ -2237,76 +2254,86 @@ function updateCanvasTexture(obj, fact){
 
   ctx.scale(scale, scale);
 
-  //Background
-  ctx.fillStyle = '#FF6600';
+  // Background: Glassmorphism effect
+  // Dark semi-transparent base
+  ctx.fillStyle = 'rgba(11, 11, 21, 0.8)';
   ctx.fillRect(0, 0, 200, 150);
 
-  ctx.fillStyle = "#000000";
+  // Neon Blue Border
+  ctx.strokeStyle = '#4D4DFF';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, 198, 148);
 
-  //Title
-  ctx.font = '18px Bold Arial';
+  // Title: Orbitron font
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = '16px "Orbitron", sans-serif';
   ctx.textAlign = "center";
-  ctx.fillText(obj.name, 100, 20);
+  ctx.fillText(obj.name, 100, 25);
 
-  ctx.strokeStyle = "#000000";
+  // Divider
+  ctx.strokeStyle = 'rgba(77, 77, 255, 0.5)';
+  ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(0, 25);
-  ctx.lineTo(200, 25);
+  ctx.moveTo(10, 35);
+  ctx.lineTo(190, 35);
   ctx.stroke();
 
   ctx.textAlign = "left";
+  ctx.fillStyle = "#CCCCCC"; // Text dim color
 
-  //Information
-  ctx.font = '10px Arial';
-  if (obj == sunObj){
+  // Information: Inter font (body)
+  ctx.font = '9px "Inter", sans-serif';
+  if (obj == sunObj) {
 
-    ctx.fillText("Mass: " + jsonObj.sun.mass, 7, 40);
-    ctx.fillText("Radius: " + jsonObj.sun.radius + " km", 7, 60);
-    ctx.fillText("Surface Temperature: " + jsonObj.sun.surfaceTemperature + " fahrenheit", 7, 80); //jsonObj.sun.surfaceTemperature fahrenheit
-    ctx.fillText("Core Temperature: " + jsonObj.sun.coreTemperature + " fahrenheit", 7, 100); //jsonObj.sun.coreTemperature + fahrenheit
+    ctx.fillText("Mass: " + jsonObj.sun.mass, 12, 50);
+    ctx.fillText("Radius: " + jsonObj.sun.radius + " km", 12, 65);
+    ctx.fillText("Surface Temp: " + jsonObj.sun.surfaceTemperature + "°F", 12, 80);
+    ctx.fillText("Core Temp: " + jsonObj.sun.coreTemperature + "°F", 12, 95);
 
-  } else if (obj == moonObj){
+  } else if (obj == moonObj) {
 
-    ctx.fillText("Mass: " + jsonObj.planets[2].moon.mass, 7, 40);
-    ctx.fillText("Radius: " + jsonObj.planets[2].moon.radius + " km", 7, 60);
-    ctx.fillText("Orbital Period Around Earth: " + jsonObj.planets[2].moon.orbitPeriod, 7, 80);
-    ctx.fillText("Distance from Earth: " + jsonObj.planets[2].moon.distanceFromEarth + " km", 7, 100);
+    ctx.fillText("Mass: " + jsonObj.planets[2].moon.mass, 12, 50);
+    ctx.fillText("Radius: " + jsonObj.planets[2].moon.radius + " km", 12, 65);
+    ctx.fillText("Orbit Period: " + jsonObj.planets[2].moon.orbitPeriod, 12, 80);
+    ctx.fillText("Dist. from Earth: " + jsonObj.planets[2].moon.distanceFromEarth + " km", 12, 95);
 
-  } else if (obj == continentObj){
-      for (let i=0; i<7; i++){
-        if (obj.name == "Continent: " + jsonObj.continents[i].name){
-          ctx.fillText("Area: " + jsonObj.continents[i].area, 7, 40);
-          ctx.fillText("Population: " + jsonObj.continents[i].population, 7, 60);
-          ctx.fillText("Number of Countries: " + jsonObj.continents[i].countries, 7, 80);
-        }
+  } else if (obj == continentObj) {
+    for (let i = 0; i < 7; i++) {
+      if (obj.name == "Continent: " + jsonObj.continents[i].name) {
+        ctx.fillText("Area: " + jsonObj.continents[i].area, 12, 50);
+        ctx.fillText("Population: " + jsonObj.continents[i].population, 12, 65);
+        ctx.fillText("Countries: " + jsonObj.continents[i].countries, 12, 80);
       }
+    }
 
   } else {
-    for (let i=0; i<jsonObj.numPlanets; i++){
-      if (obj == planets[i]){
+    for (let i = 0; i < jsonObj.numPlanets; i++) {
+      if (obj == planets[i]) {
 
-        ctx.fillText("Mass: " + jsonObj.planets[i].mass, 7, 40);
-        ctx.fillText("Radius: " + jsonObj.planets[i].radius + " km", 7, 60);
-        ctx.fillText("Orbital Period: " + jsonObj.planets[i].orbitPeriod, 7, 80);
-        ctx.fillText("Distance from Sun: " + jsonObj.planets[i].distanceFromSun + " km", 7, 100);
+        ctx.fillText("Mass: " + jsonObj.planets[i].mass, 12, 50);
+        ctx.fillText("Radius: " + jsonObj.planets[i].radius + " km", 12, 65);
+        ctx.fillText("Orbit Period: " + jsonObj.planets[i].orbitPeriod, 12, 80);
+        ctx.fillText("Dist. from Sun: " + jsonObj.planets[i].distanceFromSun + " km", 12, 95);
       }
     }
   }
 
-  wrapText(ctx, "Fun Fact: " + fact, 7, 120, 180, 18);
+  wrapText(ctx, "FUN FACT: " + fact, 12, 115, 176, 12);
 
   let texture = new THREE.CanvasTexture(ctx.canvas);
+  texture.minFilter = THREE.LinearFilter; // Sharper text
   textBox.material.map = texture;
+  textBox.material.transparent = true;
   textBox.material.needsUpdate = true;
 }
 
 
 //Code credit to: https://www.html5canvastutorials.com/tutorials/html5-canvas-wrap-text-tutorial/
-function wrapText(context, text, x, y, maxWidth, lineHeight){
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
   let words = text.split(' ');
   let line = '';
 
-  for (let i=0; i<words.length; i++){
+  for (let i = 0; i < words.length; i++) {
     let testLine = line + words[i] + ' ';
     let metrics = context.measureText(testLine);
     let testWidth = metrics.width;
@@ -2323,7 +2350,7 @@ function wrapText(context, text, x, y, maxWidth, lineHeight){
 
 
 function minimizeTextBox(minimize) {
-  if (minimize){
+  if (minimize) {
     textBox.position.y = -0.0855;
   } else {
     textBox.position.y = -0.055;

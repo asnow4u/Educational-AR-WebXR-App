@@ -1,50 +1,161 @@
+:root {
+	--color-bg: #0B0B15;
+	--color-primary: #4D4DFF;
+	--color-accent: #FFD700;
+	--color-text: #FFFFFF;
+	--color-text-dim: #CCCCCC;
+	--glass-bg: rgba(255, 255, 255, 0.05);
+	--glass-border: rgba(255, 255, 255, 0.1);
+	--glass-blur: 10px;
+	--font-header: 'Orbitron', sans-serif;
+	--font-body: 'Inter', sans-serif;
+}
+
+/* THE ROOT FIX: Lock background to html so it never gap-fills with black */
+html {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	background-color: var(--color-bg);
+	background-image:
+		radial-gradient(circle at 50% 50%, rgba(77, 77, 255, 0.1) 0%, transparent 60%),
+		url("./model/backgrounds/StarryBackground.png");
+	background-size: cover;
+	background-position: center;
+	background-attachment: fixed;
+}
+
+/* Ensure the Three.js canvas doesn't push the HTML elements around */
+canvas {
+	position: absolute !important;
+	top: 0;
+	left: 0;
+	width: 100vw !important;
+	height: 100vh !important;
+	z-index: -1;
+	/* Send it to the back */
+	pointer-events: none;
+	/* Allow interaction with UI above it */
+}
+
 body {
-  background-image: url("./model/backgrounds/StarryBackground.png");
-  background-size: inherit;
-  width: 100%;
-  height: 100%;
-  margin: 0px;
-  overflow: scroll;
-  color: white;
-  text-align: center;
+	background: transparent !important;
+	width: 100%;
+	height: 100dvh;
+	/* Dynamic viewport height */
+	margin: 0;
+	padding: 2rem 1rem;
+	box-sizing: border-box;
+	color: var(--color-text);
+	font-family: var(--font-body);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+	/* Header Top, Content Center, Controls Bottom */
+	text-align: center;
+	overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+button {
+	font-family: var(--font-header);
+	text-transform: uppercase;
+	letter-spacing: 2px;
 }
 
 #title {
-	color: #dddd00;
-	font-size: 50px;
+	font-size: 2.2rem;
+	text-shadow: 0 0 10px var(--color-primary), 0 0 20px var(--color-primary);
+	margin: 0;
+}
+
+#main-content {
+	flex: 1;
+	/* Grow to fill middle ground */
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	max-width: 500px;
 }
 
 #description {
-	margin-left: auto;
-	margin-right: auto;
-	background-color: #000;
-	color: #ffdd00;
-	border: 2px solid #ffdd00;
-	width: 70%;
-	text-align: center;
-	padding: 10px;
+	background: var(--glass-bg);
+	backdrop-filter: blur(var(--glass-blur));
+	-webkit-backdrop-filter: blur(var(--glass-blur));
+	border: 1px solid var(--glass-border);
+	border-radius: 16px;
+	padding: 1.5rem;
+	color: var(--color-text-dim);
+	line-height: 1.5;
 }
 
 #statusbox {
-	color: #dddd00;
-	font-size: 35px;
-	margin-left: auto;
-	margin-right: auto;
-	width: 70%;
-	padding-top: 5%;
-	padding-bottom: 5%;
+	color: var(--color-accent);
+	font-size: 1.1rem;
+	font-weight: 600;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+#controls-container {
+	width: 100%;
+	padding-bottom: 2rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 }
 
 #xr-button {
-	background-color: #00cc00;
-	border-color: #cccccc;
-	margin-left: auto;
-	margin-right: auto;
-	font-size: 25px;
+	background: linear-gradient(135deg, var(--color-primary), #2A2A80);
+	color: white;
+	border: none;
+	font-size: 1.1rem;
 	font-weight: bold;
-	border-radius: 100%;
-	border-width: 5px ;
-	width: 100px;
-	height: 100px;
-	margin-bottom: 100%;
+	cursor: pointer;
+	width: 130px;
+	height: 130px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 0 20px rgba(77, 77, 255, 0.5);
+	transition: all 0.3s ease;
+}
+
+#status-sub {
+	color: var(--color-text-dim);
+	font-size: 0.9rem;
+	margin-top: 1rem;
+	height: 1rem;
+}
+
+/* Error States */
+.error-text {
+	color: #FF3333 !important;
+	text-shadow: 0 0 10px #FF0000 !important;
+}
+
+.error-button {
+	background: #440000 !important;
+	border: 2px solid #FF0000 !important;
+	box-shadow: 0 0 15px rgba(255, 0, 0, 0.6) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 450px) {
+	#title {
+		font-size: 1.8rem;
+	}
+
+	#xr-button {
+		width: 110px;
+		height: 110px;
+		font-size: 1rem;
+	}
 }

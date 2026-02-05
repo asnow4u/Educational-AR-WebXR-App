@@ -1,21 +1,45 @@
 <!DOCTYPE html>
-  <html>
-    <head>
-      <title>Solar System</title>
+<html>
 
-      <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		  <meta charset="utf-8">
+<head>
+  <title>Solar System</title>
 
-      <link rel="stylesheet" href="./style.css" type="text/css">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <meta charset="utf-8">
 
-	  </head>
-	  <body>
-        <h1 id="title">The Solar System</h1>
-        <p id="description">This is an educational Solar System Augmented Reality application. Once you are in, place the solar system in a suitable location that is defined by a blue circle that comes up where you are pointing the camera. You will be able to explore our solar system by touching planets or using the onscreen interface. Keep your eyes open for some "fun facts", there may be some use to them later down the road. Press the "Start AR" button at any time to begin your journey.</p>
-        <div id="statusbox">You are ready for</div>
-        <button id="xr-button">LIFT OFF!</button>
-       
-        <script type="module" src="src/solar.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@400;700&display=swap"
+    rel="stylesheet">
 
-     </body>
-  </html>
+  <link rel="stylesheet" href="./style.css" type="text/css">
+
+
+</head>
+
+<body>
+  <h1 id="title">The Solar System</h1>
+  <div id="main-content">
+    <div id="description">
+      <h3>Mission Briefing</h3>
+      <p>Welcome, Explorer! 🚀<br>Your mission is to survey the Solar System right in your living room.</p>
+      <ul style="text-align: left; display: inline-block; margin: 0 auto;">
+        <li>Scan your floor to find a landing zone (Look for the Yellow Circle).</li>
+        <li>Tap to deploy the planets.</li>
+        <li>Tap planets to uncover secrets (psst... you'll need these later!).</li>
+      </ul>
+      <p>Ready for launch?</p>
+    </div>
+    <div id="statusbox"></div>
+  </div>
+
+  <div id="controls-container">
+    <button id="xr-button">LIFT OFF!</button>
+    <div id="status-sub"></div>
+  </div>
+
+  <script type="module" src="src/solar.js"></script>
+
+</body>
+
+</html>
