@@ -2,7 +2,7 @@
   Solar.js
 ******************************************************************/
 
-import { Workbox } from 'workbox-window';
+// import { Workbox } from 'workbox-window';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -10,10 +10,12 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 /*****************************************************************
   Service Worker
 ******************************************************************/
+/*
 if ("serviceWorker" in navigator) {
   const wb = new Workbox('sw.js');
   wb.register();
 }
+*/
 
 
 /*****************************************************************
