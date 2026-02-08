@@ -41,7 +41,8 @@ let showSolarSystem = false;
 let arActivated = false;
 let reticle;
 let gl = null;
-let xrHitTestSource = null
+let xrHitTestSource = null;
+let hudAdjusted = false;
 
 
 /*****************************************************************
@@ -503,6 +504,12 @@ function renderXR(timestamp, xrFrame) {
   if (!pose) {
     xrSession.requestAnimationFrame(renderXR);
     return;
+  }
+
+  // Responsive HUD Adjustment (Call once pose is active)
+  if (showSolarSystem && !hudAdjusted && pose.views.length > 0) {
+    repositionHUD();
+    hudAdjusted = true;
   }
 
   //If solar system has not been placed, show a reticle to place it
@@ -2023,8 +2030,13 @@ function togglePause() {
         jsonObj.planets[i].moon.moveOrbit = false;
       }
     }
+    //uiOptions[2].position.x = 1.0;
+    //uiOptions[7].position.x = uiOptions[2].position.x; // Switch to Play at same spot
+
+    // Switch positions
+    let currentX = uiOptions[2].position.x;
     uiOptions[2].position.x = 1.0;
-    uiOptions[7].position.x = -0.18;
+    uiOptions[7].position.x = currentX;
   } else {
     //UnPause
     jsonObj.pause = false;
@@ -2045,8 +2057,9 @@ function togglePause() {
         }
       }
     }
+    let currentX = uiOptions[7].position.x;
     uiOptions[7].position.x = 1.0;
-    uiOptions[2].position.x = -0.18;
+    uiOptions[2].position.x = currentX;
   }
 }
 
@@ -2312,6 +2325,42 @@ function createHUDMenu(title, count) {
   });
 
   return container;
+}
+
+
+function repositionHUD() {
+  if (!camera || !camera.projectionMatrix) return;
+
+  const m = camera.projectionMatrix.elements;
+  const d = 0.5; // Positioning depth
+
+  // Calculate half-width and half-height at depth d using projection matrix
+  // P[0] = 1/(aspect * tan(f/2)), P[5] = 1/tan(f/2)
+  const halfH = d / m[5];
+  const halfW = d / m[0];
+
+  // Use a 85% safety margin to stay away from the exact screen edges
+  const margin = 0.85;
+  const safeW = halfW * margin;
+  const safeH = halfH * margin;
+
+  console.log("HUD Repositioning: Safe bounds calculated", { safeW, safeH });
+
+  // Top Left: Pause
+  if (uiOptions[2]) uiOptions[2].position.set(-safeW, safeH, -d);
+
+  // Top Right: Nav Trigger
+  if (navTrigger) navTrigger.position.set(safeW, safeH, -d);
+
+  // Bottom Right: Settings Trigger
+  if (settingsTrigger) settingsTrigger.position.set(safeW, -safeH, -d);
+
+  // Position menus relative to triggers
+  if (navBox) navBox.position.set(safeW - 0.07, safeH - 0.05, -d);
+  if (settingsBox) settingsBox.position.set(safeW - 0.07, -safeH + 0.1, -d);
+
+  // Initial Pause/Play positioning
+  if (uiOptions[7]) uiOptions[7].position.set(1.0, safeH, -d); // Play (hidden)
 }
 
 
