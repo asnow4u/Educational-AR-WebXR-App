@@ -376,8 +376,8 @@ function loadUI() {
   camera.add(collisionAlert);
 
   // New Trigger Icons (Drawn via Canvas)
-  navTrigger = createIconTrigger("NAV", 0.1, 0.22); // Top Right (Recalibrated)
-  settingsTrigger = createIconTrigger("GEAR", 0.1, -0.22); // Bottom Right (Recalibrated)
+  navTrigger = createIconTrigger("NAV", 0.1, 0.25); // Top Right (Recalibrated)
+  settingsTrigger = createIconTrigger("GEAR", 0.1, -0.25); // Bottom Right (Recalibrated)
   camera.add(navTrigger);
   camera.add(settingsTrigger);
 
@@ -386,7 +386,7 @@ function loadUI() {
   const pauseTex = new THREE.TextureLoader().load(jsonObj.ui[2].texture);
   uiOptions[2] = new THREE.Mesh(pauseGeom, new THREE.MeshBasicMaterial({ map: pauseTex, transparent: true }));
   uiOptions[2].name = "Pause";
-  uiOptions[2].position.set(-0.1, 0.22, -0.4);
+  uiOptions[2].position.set(-0.13, 0.25, -0.5);
   uiOptions[2].renderOrder = 999;
   uiOptions[2].visible = false;
   camera.add(uiOptions[2]);
@@ -394,7 +394,7 @@ function loadUI() {
   const playTex = new THREE.TextureLoader().load(jsonObj.ui[7].texture);
   uiOptions[7] = new THREE.Mesh(pauseGeom, new THREE.MeshBasicMaterial({ map: playTex, transparent: true }));
   uiOptions[7].name = "Play";
-  uiOptions[7].position.set(1.0, 0.22, -0.4);
+  uiOptions[7].position.set(1.0, 0.25, -0.5);
   uiOptions[7].renderOrder = 999;
   uiOptions[7].visible = false;
   camera.add(uiOptions[7]);
@@ -2024,7 +2024,7 @@ function togglePause() {
       }
     }
     uiOptions[2].position.x = 1.0;
-    uiOptions[7].position.x = -0.1;
+    uiOptions[7].position.x = -0.13;
   } else {
     //UnPause
     jsonObj.pause = false;
@@ -2046,7 +2046,7 @@ function togglePause() {
       }
     }
     uiOptions[7].position.x = 1.0;
-    uiOptions[2].position.x = -0.1;
+    uiOptions[2].position.x = -0.13;
   }
 }
 
@@ -2265,7 +2265,7 @@ function createIconTrigger(type, x, y) {
   let material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
   let mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.05), material);
   mesh.renderOrder = 1000;
-  mesh.position.set(x, y, -0.4);
+  mesh.position.set(x, y, -0.5);
   mesh.name = type === "NAV" ? "NAV_TRIGGER" : "GEAR_TRIGGER";
   return mesh;
 }
