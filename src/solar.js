@@ -376,10 +376,28 @@ function loadUI() {
   camera.add(collisionAlert);
 
   // New Trigger Icons (Drawn via Canvas)
-  navTrigger = createIconTrigger("NAV", 0.13, 0.25); // Top Right
-  settingsTrigger = createIconTrigger("GEAR", 0.13, -0.25); // Bottom Right
+  navTrigger = createIconTrigger("NAV", 0.1, 0.22); // Top Right (Recalibrated)
+  settingsTrigger = createIconTrigger("GEAR", 0.1, -0.22); // Bottom Right (Recalibrated)
   camera.add(navTrigger);
   camera.add(settingsTrigger);
+
+  // Restore Pause/Play Buttons
+  const pauseGeom = new THREE.PlaneGeometry(.05, .05);
+  const pauseTex = new THREE.TextureLoader().load(jsonObj.ui[2].texture);
+  uiOptions[2] = new THREE.Mesh(pauseGeom, new THREE.MeshBasicMaterial({ map: pauseTex, transparent: true }));
+  uiOptions[2].name = "Pause";
+  uiOptions[2].position.set(-0.1, 0.22, -0.4);
+  uiOptions[2].renderOrder = 999;
+  uiOptions[2].visible = false;
+  camera.add(uiOptions[2]);
+
+  const playTex = new THREE.TextureLoader().load(jsonObj.ui[7].texture);
+  uiOptions[7] = new THREE.Mesh(pauseGeom, new THREE.MeshBasicMaterial({ map: playTex, transparent: true }));
+  uiOptions[7].name = "Play";
+  uiOptions[7].position.set(1.0, 0.22, -0.4);
+  uiOptions[7].renderOrder = 999;
+  uiOptions[7].visible = false;
+  camera.add(uiOptions[7]);
 
   // Hidden at start
   navTrigger.visible = false;
@@ -1466,6 +1484,7 @@ function touchSelectEvent() {
       instructionBox.visible = false;
       navTrigger.visible = true;
       settingsTrigger.visible = true;
+      uiOptions[2].visible = true;
     } else {
       console.log("cant place yet");
     }
@@ -1604,6 +1623,10 @@ function menuEvent(intersects) {
 
     // Handle Settings Menu Items
     switch (name) {
+      case "Pause":
+      case "Play":
+        togglePause();
+        break;
       case "ORBIT LINES":
         toggleOrbitLines();
         settingsVisible = false;
@@ -2001,7 +2024,7 @@ function togglePause() {
       }
     }
     uiOptions[2].position.x = 1.0;
-    uiOptions[7].position.x = jsonObj.ui[7].position.x;
+    uiOptions[7].position.x = -0.1;
   } else {
     //UnPause
     jsonObj.pause = false;
@@ -2023,7 +2046,7 @@ function togglePause() {
       }
     }
     uiOptions[7].position.x = 1.0;
-    uiOptions[2].position.x = jsonObj.ui[2].position.x;
+    uiOptions[2].position.x = -0.1;
   }
 }
 
