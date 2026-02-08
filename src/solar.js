@@ -357,7 +357,7 @@ function loadUI() {
   // Replaced anchorAlert (Anchor.png) with instructionBox HUD
   let instrCtx = document.createElement('canvas').getContext('2d');
   let instrTexture = new THREE.CanvasTexture(instrCtx.canvas);
-  let instrMaterial = new THREE.MeshBasicMaterial({ map: instrTexture, transparent: true });
+  let instrMaterial = new THREE.MeshBasicMaterial({ map: instrTexture, transparent: true, depthTest: false });
   instructionBox = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.04), instrMaterial);
   instructionBox.renderOrder = 1000;
   instructionBox.position.set(0, 0.2, -0.4);
@@ -367,7 +367,7 @@ function loadUI() {
   let collisionGeometry = new THREE.PlaneGeometry(.1, .1, .05);
   var collisionTexture = new THREE.TextureLoader().load("./model/UI-Textures/Collision_Alert.png");
 
-  let collisionMaterial = new THREE.MeshBasicMaterial({ map: collisionTexture, transparent: true });
+  let collisionMaterial = new THREE.MeshBasicMaterial({ map: collisionTexture, transparent: true, depthTest: false });
   collisionAlert = new THREE.Mesh(collisionGeometry, collisionMaterial);
   collisionAlert.renderOrder = 999;
   collisionAlert.position.x = 0.0;
@@ -385,7 +385,7 @@ function loadUI() {
   // Restore Pause/Play Buttons
   const pauseGeom = new THREE.PlaneGeometry(.05, .05);
   const pauseTex = new THREE.TextureLoader().load(jsonObj.ui[2].texture);
-  uiOptions[2] = new THREE.Mesh(pauseGeom, new THREE.MeshBasicMaterial({ map: pauseTex, transparent: true }));
+  uiOptions[2] = new THREE.Mesh(pauseGeom, new THREE.MeshBasicMaterial({ map: pauseTex, transparent: true, depthTest: false }));
   uiOptions[2].name = "Pause";
   uiOptions[2].position.set(-0.18, 0.25, -0.5);
   uiOptions[2].renderOrder = 999;
@@ -393,7 +393,7 @@ function loadUI() {
   camera.add(uiOptions[2]);
 
   const playTex = new THREE.TextureLoader().load(jsonObj.ui[7].texture);
-  uiOptions[7] = new THREE.Mesh(pauseGeom, new THREE.MeshBasicMaterial({ map: playTex, transparent: true }));
+  uiOptions[7] = new THREE.Mesh(pauseGeom, new THREE.MeshBasicMaterial({ map: playTex, transparent: true, depthTest: false }));
   uiOptions[7].name = "Play";
   uiOptions[7].position.set(1.0, 0.25, -0.5);
   uiOptions[7].renderOrder = 999;
@@ -422,7 +422,8 @@ function loadUI() {
   let texture = new THREE.CanvasTexture(ctx.canvas);
   let boxMaterial = new THREE.MeshBasicMaterial({
     map: texture,
-    transparent: true
+    transparent: true,
+    depthTest: false
   });
 
   let boxGeometry = new THREE.PlaneGeometry(.061, .05);
@@ -1692,6 +1693,8 @@ function updateSettingsLabels() {
     ctx.fillText(text, 24, h / 2);
 
     mesh.material.map = new THREE.CanvasTexture(ctx.canvas);
+    mesh.material.depthTest = false;
+    mesh.material.transparent = true;
     mesh.name = text;
   });
 }
@@ -2312,7 +2315,7 @@ function createIconTrigger(type, x, y) {
   }
 
   let texture = new THREE.CanvasTexture(ctx.canvas);
-  let material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+  let material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthTest: false });
   let mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.05), material);
   mesh.renderOrder = 1000;
   mesh.position.set(x, y, -0.5);
@@ -2358,7 +2361,7 @@ function createHUDMenu(title, count) {
     ctx.fillText(text, 24, h / 2);
 
     let texture = new THREE.CanvasTexture(ctx.canvas);
-    let material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+    let material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthTest: false });
     let mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.035), material);
     mesh.renderOrder = 1100;
     mesh.position.y = -i * 0.04;
@@ -2395,9 +2398,12 @@ function repositionHUD() {
   // Bottom Right: Settings Trigger
   if (settingsTrigger) settingsTrigger.position.set(safeW, -safeH, -d);
 
-  // Position menus relative to triggers (Moved right slightly: safeW - 0.05)
-  if (navBox) navBox.position.set(safeW - 0.05, safeH - 0.05, -d);
-  if (settingsBox) settingsBox.position.set(safeW - 0.05, -safeH + 0.1, -d);
+  // Position menus relative to triggers
+  // Nav Box: slightly to the left of the trigger, same height
+  if (navBox) navBox.position.set(safeW - 0.08, safeH - 0.02, -d);
+
+  // Settings Box: slightly to the left of the trigger, shifted UP to not overlap gear
+  if (settingsBox) settingsBox.position.set(safeW - 0.08, -safeH + 0.14, -d);
 
   // Initial Pause/Play positioning
   if (uiOptions[7]) uiOptions[7].position.set(1.0, safeH, -d);
