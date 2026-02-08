@@ -2342,21 +2342,25 @@ function createIconTrigger(type, x, y) {
       ctx.restore();
     }
   } else if (type === "RESET") {
-    // Home / Reset Icon
+    // Undo / Return Arrow Icon
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    // Draw curved arrow shaft
+    ctx.beginPath();
+    ctx.arc(64, 70, 30, Math.PI * 1.5, Math.PI * 0.2);
+    ctx.stroke();
+
+    // Draw arrow head
     ctx.fillStyle = "#FFFFFF";
     ctx.beginPath();
-    ctx.moveTo(64, 30); // Roof Top
-    ctx.lineTo(30, 60); // Roof Left
-    ctx.lineTo(40, 60); // Body Top Left
-    ctx.lineTo(40, 95); // Body Bottom Left
-    ctx.lineTo(88, 95); // Body Bottom Right
-    ctx.lineTo(88, 60); // Body Top Right
-    ctx.lineTo(98, 60); // Roof Right
+    ctx.moveTo(64, 40); // Top of shaft curve
+    ctx.lineTo(44, 40); // Point left
+    ctx.lineTo(64, 20); // Point up
     ctx.closePath();
     ctx.fill();
-    // Door
-    ctx.fillStyle = "#4D4DFF";
-    ctx.fillRect(54, 70, 20, 25);
   }
 
   let texture = new THREE.CanvasTexture(ctx.canvas);
