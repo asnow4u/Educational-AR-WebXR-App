@@ -1617,10 +1617,9 @@ function menuEvent(intersects) {
     }
 
     // Handle Navigation Menu Items
-    const planetsList = ["SUN", "MERCURY", "VENUS", "EARTH", "MOON", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"];
+    const planetsList = ["SUN", "MERCURY", "VENUS", "EARTH", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"];
     if (planetsList.includes(name)) {
       if (name === "SUN") sunSelect();
-      else if (name === "MOON") moonSelect();
       else {
         const index = planetsList.indexOf(name) - 1; // Mercury is 1 in list, 0 in planetSelect
         planetSelect(index);
@@ -2329,7 +2328,7 @@ function createHUDMenu(title, count) {
 
   let labels;
   if (title === "NAVIGATION") {
-    labels = ["SUN", "MERCURY", "VENUS", "EARTH", "MOON", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"];
+    labels = ["SUN", "MERCURY", "VENUS", "EARTH", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"];
   } else {
     const orbitLabel = jsonObj.showPlanetLines ? "[ON] ORBIT LINES" : "[OFF] ORBIT LINES";
     const lightLabel = cameraLight.visible ? "[ON] LIGHTS" : "[OFF] LIGHTS";
@@ -2399,11 +2398,11 @@ function repositionHUD() {
   if (settingsTrigger) settingsTrigger.position.set(safeW, -safeH, -d);
 
   // Position menus relative to triggers
-  // Nav Box: slightly to the left of the trigger, same height
-  if (navBox) navBox.position.set(safeW - 0.08, safeH - 0.02, -d);
+  // Reverting to v6 horizontal position (safeW - 0.05)
+  if (navBox) navBox.position.set(safeW - 0.05, safeH - 0.05, -d);
 
-  // Settings Box: slightly to the left of the trigger, shifted UP to not overlap gear
-  if (settingsBox) settingsBox.position.set(safeW - 0.08, -safeH + 0.14, -d);
+  // Settings Box: Keeping v7 vertical shift (+0.14) but reverting horizontal
+  if (settingsBox) settingsBox.position.set(safeW - 0.05, -safeH + 0.14, -d);
 
   // Initial Pause/Play positioning
   if (uiOptions[7]) uiOptions[7].position.set(1.0, safeH, -d);
