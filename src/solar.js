@@ -1492,6 +1492,7 @@ function touchSelectEvent() {
       navTrigger.visible = true;
       settingsTrigger.visible = true;
       uiOptions[2].visible = true;
+      uiOptions[7].visible = true; // Ensure Play is also ready to be swapped in
     } else {
       console.log("cant place yet");
     }
@@ -1634,15 +1635,15 @@ function menuEvent(intersects) {
       case "Play":
         togglePause();
         break;
-      case "ORBIT LINES [ON]":
-      case "ORBIT LINES [OFF]":
+      case "[ON] ORBIT LINES":
+      case "[OFF] ORBIT LINES":
         toggleOrbitLines();
         updateSettingsLabels();
         settingsVisible = false;
         settingsBox.visible = false;
         break;
-      case "LIGHTS [ON]":
-      case "LIGHTS [OFF]":
+      case "[ON] LIGHTS":
+      case "[OFF] LIGHTS":
         toggleLight();
         updateSettingsLabels();
         settingsVisible = false;
@@ -1666,16 +1667,16 @@ function menuEvent(intersects) {
 function updateSettingsLabels() {
   if (!settingsBox) return;
 
-  const orbitLabel = jsonObj.showPlanetLines ? "ORBIT LINES [ON]" : "ORBIT LINES [OFF]";
-  const lightLabel = cameraLight.visible ? "LIGHTS [ON]" : "LIGHTS [OFF]";
+  const orbitLabel = jsonObj.showPlanetLines ? "[ON] ORBIT LINES" : "[OFF] ORBIT LINES";
+  const lightLabel = cameraLight.visible ? "[ON] LIGHTS" : "[OFF] LIGHTS";
   const labels = [orbitLabel, lightLabel, "EXIT MISSION"];
 
   settingsBox.children.forEach((mesh, i) => {
     let text = labels[i];
     let ctx = document.createElement('canvas').getContext('2d');
     let scale = window.devicePixelRatio || 1;
-    let w = 256;
-    let h = 48;
+    let w = 320; // Wider for larger text
+    let h = 64;  // Taller for larger text
     ctx.canvas.width = w * scale;
     ctx.canvas.height = h * scale;
     ctx.scale(scale, scale);
@@ -1683,12 +1684,12 @@ function updateSettingsLabels() {
     ctx.fillStyle = 'rgba(11, 11, 21, 0.85)';
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = '#4D4DFF';
-    ctx.fillRect(0, 0, 4, h);
+    ctx.fillRect(0, 0, 6, h);
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = '18px "Orbitron", sans-serif';
+    ctx.font = '22px "Orbitron", sans-serif'; // Even bigger for mobile
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(text, 20, h / 2);
+    ctx.fillText(text, 24, h / 2);
 
     mesh.material.map = new THREE.CanvasTexture(ctx.canvas);
     mesh.name = text;
@@ -2327,16 +2328,16 @@ function createHUDMenu(title, count) {
   if (title === "NAVIGATION") {
     labels = ["SUN", "MERCURY", "VENUS", "EARTH", "MOON", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"];
   } else {
-    const orbitLabel = jsonObj.showPlanetLines ? "ORBIT LINES [ON]" : "ORBIT LINES [OFF]";
-    const lightLabel = cameraLight.visible ? "LIGHTS [ON]" : "LIGHTS [OFF]";
+    const orbitLabel = jsonObj.showPlanetLines ? "[ON] ORBIT LINES" : "[OFF] ORBIT LINES";
+    const lightLabel = cameraLight.visible ? "[ON] LIGHTS" : "[OFF] LIGHTS";
     labels = [orbitLabel, lightLabel, "EXIT MISSION"];
   }
 
   labels.forEach((text, i) => {
     let ctx = document.createElement('canvas').getContext('2d');
     let scale = window.devicePixelRatio || 1;
-    let w = 256;
-    let h = 48;
+    let w = 320;
+    let h = 64;
     ctx.canvas.width = w * scale;
     ctx.canvas.height = h * scale;
     ctx.scale(scale, scale);
@@ -2347,20 +2348,20 @@ function createHUDMenu(title, count) {
 
     // Neon Accent
     ctx.fillStyle = '#4D4DFF';
-    ctx.fillRect(0, 0, 4, h);
+    ctx.fillRect(0, 0, 6, h);
 
     // Text
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = '18px "Orbitron", sans-serif';
+    ctx.font = '22px "Orbitron", sans-serif';
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(text, 20, h / 2);
+    ctx.fillText(text, 24, h / 2);
 
     let texture = new THREE.CanvasTexture(ctx.canvas);
     let material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
-    let mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.022), material);
+    let mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.035), material);
     mesh.renderOrder = 1100;
-    mesh.position.y = -i * 0.025;
+    mesh.position.y = -i * 0.04;
     mesh.name = text;
     container.add(mesh);
   });
