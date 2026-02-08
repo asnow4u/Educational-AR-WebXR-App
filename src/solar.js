@@ -23,7 +23,7 @@ let continentObj = new THREE.Object3D();
 let uiOptions = [];
 let planetOptions = [];
 let uiPlanetIndex;
-let anchorAlert, collisionAlert;
+let collisionAlert, instructionBox;
 let textBox;
 let planetOptionsVisible = false;
 let uiOptionsVisible = false;
@@ -348,16 +348,16 @@ function onError(error) {
 ******************************************************************/
 function loadUI() {
   uiPlanetIndex = jsonObj.planet_index;
-  let alertGeometry = new THREE.PlaneGeometry(.15, .15, .05);
-  var alertTexture = new THREE.TextureLoader().load("./model/UI-Textures/Anchor.png");
 
-  let alertMaterial = new THREE.MeshBasicMaterial({ map: alertTexture, transparent: true });
-  anchorAlert = new THREE.Mesh(alertGeometry, alertMaterial);
-  anchorAlert.renderOrder = 999;
-  anchorAlert.position.x = 0.0;
-  anchorAlert.position.y = .25;
-  anchorAlert.position.z = -.50;
-  camera.add(anchorAlert);
+  // Replaced anchorAlert (Anchor.png) with instructionBox HUD
+  let instrCtx = document.createElement('canvas').getContext('2d');
+  let instrTexture = new THREE.CanvasTexture(instrCtx.canvas);
+  let instrMaterial = new THREE.MeshBasicMaterial({ map: instrTexture, transparent: true });
+  instructionBox = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.04), instrMaterial);
+  instructionBox.renderOrder = 1000;
+  instructionBox.position.set(0, 0.2, -0.4);
+  camera.add(instructionBox);
+  updateInstructionHUD("Initializing Systems...");
 
   let collisionGeometry = new THREE.PlaneGeometry(.1, .1, .05);
   var collisionTexture = new THREE.TextureLoader().load("./model/UI-Textures/Collision_Alert.png");
@@ -388,6 +388,11 @@ function loadUI() {
     uiOptions[i].position.y += jsonObj.ui[i].position.y;
     uiOptions[i].position.z -= jsonObj.ui[i].position.z;
     camera.add(uiOptions[i]);
+
+    // Hide Drawer and Pause buttons during placement
+    if (i == 0 || i == 2) {
+      uiOptions[i].visible = false;
+    }
   }
 
   for (let i = 0; i < jsonObj.ui[uiPlanetIndex].size; i++) {
@@ -500,8 +505,8 @@ function renderXR(timestamp, xrFrame) {
     if (xrHitTestSource && pose) {
       let hitTestResults = xrFrame.getHitTestResults(xrHitTestSource);
       if (hitTestResults.length > 0) {
-        console.log("raycast good");
-        anchorAlert.position.z = 1.;
+        updateInstructionHUD("TARGET LOCKED - TAP TO DEPLOY");
+
         let result = hitTestResults[0].getPose(xrRefSpace);
 
         let hitMatrix = new THREE.Matrix4();
@@ -532,8 +537,7 @@ function renderXR(timestamp, xrFrame) {
         originPoint.visible = false;
 
       } else {
-        anchorAlert.position.z = -.5;
-        console.log("keep Looking");
+        updateInstructionHUD("SCANNING FLOOR... MOVE PHONE");
         reticle.visible = false;
       }
     }
@@ -1467,10 +1471,48 @@ function touchSelectEvent() {
 
       scene.add(originPoint);
       originPoint.position.copy(placementPos);
+
+      // UI Transition: Hide instructions, show corner buttons
+      instructionBox.visible = false;
+      if (uiOptions[0]) uiOptions[0].visible = true;
+      if (uiOptions[2]) uiOptions[2].visible = true;
     } else {
       console.log("cant place yet");
     }
   }
+}
+
+
+// Instruction HUD Rendering
+function updateInstructionHUD(text) {
+  if (!instructionBox) return;
+
+  let ctx = instructionBox.material.map.image.getContext('2d');
+  let scale = window.devicePixelRatio || 1;
+  let w = 256;
+  let h = 64;
+
+  ctx.canvas.width = w * scale;
+  ctx.canvas.height = h * scale;
+  ctx.scale(scale, scale);
+
+  // Background: Glassmorphic
+  ctx.fillStyle = 'rgba(11, 11, 21, 0.7)';
+  ctx.fillRect(0, 0, w, h);
+
+  // Neon Border
+  ctx.strokeStyle = '#ffff00'; // Match the yellow reticle
+  ctx.lineWidth = 2;
+  ctx.strokeRect(2, 2, w - 4, h - 4);
+
+  // Text: Orbitron
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = '12px "Orbitron", sans-serif';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, w / 2, h / 2);
+
+  instructionBox.material.map.needsUpdate = true;
 }
 
 
