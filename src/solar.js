@@ -25,7 +25,7 @@ let planetOptions = [];
 let uiPlanetIndex;
 let collisionAlert, instructionBox;
 let textBox;
-let navTrigger, settingsTrigger;
+let navTrigger, settingsTrigger, resetTrigger;
 let navBox, settingsBox;
 let navVisible = false;
 let settingsVisible = false;
@@ -379,8 +379,10 @@ function loadUI() {
   // New Trigger Icons (Drawn via Canvas)
   navTrigger = createIconTrigger("NAV", 0.18, 0.25); // Top Right (Pinned to corner)
   settingsTrigger = createIconTrigger("GEAR", 0.18, -0.25); // Bottom Right (Pinned to corner)
+  resetTrigger = createIconTrigger("RESET", 0.18, 0.25); // Top Right (Pinned to corner)
   camera.add(navTrigger);
   camera.add(settingsTrigger);
+  camera.add(resetTrigger);
 
   // Restore Pause/Play Buttons
   const pauseGeom = new THREE.PlaneGeometry(.05, .05);
@@ -403,6 +405,7 @@ function loadUI() {
   // Hidden at start
   navTrigger.visible = false;
   settingsTrigger.visible = false;
+  resetTrigger.visible = false;
 
   // Setup Dynamic HUD Menus
   navBox = createHUDMenu("NAVIGATION", 11); // 11 entries: Sun + 9 Planets + Moon
@@ -1380,6 +1383,7 @@ function returnToOrigin() {
     jsonObj.originReturn = false;
     jsonObj.objTranslation.timeStep = 100;
     jsonObj.objTranslation.inTransit = false;
+    toggleUpCloseUI(false);
   }
 }
 
@@ -1441,7 +1445,7 @@ function touchSelectEvent() {
 
       //Variables that are touchable
       let sceneIntersectsArray = [sunObj, moonObj, planets[0], planets[1], planets[2], planets[3], planets[4], planets[5], planets[6], planets[7], planets[8], planetOrigins[0], planetOrigins[1], planetOrigins[2], planetOrigins[3], planetOrigins[4], planetOrigins[5], planetOrigins[6], planetOrigins[7], planetOrigins[8]];
-      let menuIntersectsArray = [navTrigger, settingsTrigger, navBox, settingsBox, uiOptions[2], uiOptions[7], textBox];
+      let menuIntersectsArray = [navTrigger, settingsTrigger, resetTrigger, navBox, settingsBox, uiOptions[2], uiOptions[7], textBox];
 
       //Check if ray intercepted and touchable objs
       let intersects = sceneRaycaster.intersectObjects(menuIntersectsArray, true);
@@ -1616,6 +1620,11 @@ function menuEvent(intersects) {
       return;
     }
 
+    if (name === "RESET_TRIGGER") {
+      toggleReturnToOrigin();
+      return;
+    }
+
     // Handle Navigation Menu Items
     const planetsList = ["SUN", "MERCURY", "VENUS", "EARTH", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"];
     if (planetsList.includes(name)) {
@@ -1761,7 +1770,8 @@ function sunSelect() {
 
     jsonObj.objTranslation.timeStep = 100;
     jsonObj.objTranslation.inTransit = true;
-    atOrigin = false
+    atOrigin = false;
+    toggleUpCloseUI(true);
 
   } else {
     minimizeTextBox(false);
@@ -1833,6 +1843,7 @@ function planetSelect(num) {
     jsonObj.objTranslation.timeStep = 100;
     jsonObj.objTranslation.inTransit = true;
     atOrigin = false;
+    toggleUpCloseUI(true);
 
   } else {
     minimizeTextBox(false);
@@ -1897,6 +1908,7 @@ function moonSelect() {
     jsonObj.objTranslation.inTransit = true;
 
     atOrigin = false;
+    toggleUpCloseUI(true);
 
   } else {
     minimizeTextBox(false);
@@ -2048,6 +2060,7 @@ function toggleReturnToOrigin() {
 
   //Hide textBox for transition
   textBox.visible = false;
+  resetTrigger.visible = false;
   jsonObj.objTranslation.inTransit = true;
   jsonObj.originReturn = true;
   atOrigin = true;
@@ -2268,6 +2281,23 @@ function minimizeTextBox(minimize) {
 }
 
 
+function toggleUpCloseUI(upClose) {
+  if (upClose) {
+    navTrigger.visible = false;
+    settingsTrigger.visible = false;
+    resetTrigger.visible = true;
+    navBox.visible = false;
+    settingsBox.visible = false;
+    navVisible = false;
+    settingsVisible = false;
+  } else {
+    navTrigger.visible = true;
+    settingsTrigger.visible = true;
+    resetTrigger.visible = false;
+  }
+}
+
+
 // UI Rendering Helpers
 function createIconTrigger(type, x, y) {
   let ctx = document.createElement('canvas').getContext('2d');
@@ -2296,7 +2326,7 @@ function createIconTrigger(type, x, y) {
     ctx.beginPath(); ctx.arc(35, 45, 8, 0, Math.PI * 2); ctx.fill(); // P1
     ctx.beginPath(); ctx.arc(95, 75, 10, 0, Math.PI * 2); ctx.fill(); // P2
     ctx.beginPath(); ctx.arc(55, 100, 6, 0, Math.PI * 2); ctx.fill(); // P3
-  } else {
+  } else if (type === "GEAR") {
     // Gear Icon
     ctx.strokeStyle = "#FFFFFF";
     ctx.lineWidth = 5;
@@ -2311,6 +2341,22 @@ function createIconTrigger(type, x, y) {
       ctx.fillRect(-8, -45, 16, 15);
       ctx.restore();
     }
+  } else if (type === "RESET") {
+    // Home / Reset Icon
+    ctx.fillStyle = "#FFFFFF";
+    ctx.beginPath();
+    ctx.moveTo(64, 30); // Roof Top
+    ctx.lineTo(30, 60); // Roof Left
+    ctx.lineTo(40, 60); // Body Top Left
+    ctx.lineTo(40, 95); // Body Bottom Left
+    ctx.lineTo(88, 95); // Body Bottom Right
+    ctx.lineTo(88, 60); // Body Top Right
+    ctx.lineTo(98, 60); // Roof Right
+    ctx.closePath();
+    ctx.fill();
+    // Door
+    ctx.fillStyle = "#4D4DFF";
+    ctx.fillRect(54, 70, 20, 25);
   }
 
   let texture = new THREE.CanvasTexture(ctx.canvas);
@@ -2318,7 +2364,9 @@ function createIconTrigger(type, x, y) {
   let mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.05), material);
   mesh.renderOrder = 1000;
   mesh.position.set(x, y, -0.5);
-  mesh.name = type === "NAV" ? "NAV_TRIGGER" : "GEAR_TRIGGER";
+  if (type === "NAV") mesh.name = "NAV_TRIGGER";
+  else if (type === "GEAR") mesh.name = "GEAR_TRIGGER";
+  else if (type === "RESET") mesh.name = "RESET_TRIGGER";
   return mesh;
 }
 
@@ -2393,6 +2441,9 @@ function repositionHUD() {
 
   // Top Right: Nav Trigger
   if (navTrigger) navTrigger.position.set(safeW, safeH, -d);
+
+  // Top Right: Reset Trigger (Same spot as Nav)
+  if (resetTrigger) resetTrigger.position.set(safeW, safeH, -d);
 
   // Bottom Right: Settings Trigger
   if (settingsTrigger) settingsTrigger.position.set(safeW, -safeH, -d);
