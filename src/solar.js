@@ -589,7 +589,7 @@ function createReticle() {
   reticle = new THREE.Object3D();
 
   let ringGeometry = new THREE.RingGeometry(0.07, 0.09, 24, 1);
-  let ringMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFF00 });
+  let ringMaterial = new THREE.MeshBasicMaterial({ color: 0x4D4DFF });
   ringGeometry.applyMatrix(new THREE.Matrix4().makeRotationX(THREE.Math.degToRad(-90)));
   let circle = new THREE.Mesh(ringGeometry, ringMaterial);
   circle.position.y = 0.03;
@@ -1501,7 +1501,7 @@ function updateInstructionHUD(text) {
   ctx.fillRect(0, 0, w, h);
 
   // Neon Border
-  ctx.strokeStyle = '#ffff00'; // Match the yellow reticle
+  ctx.strokeStyle = '#4D4DFF'; // Match the brand blue title
   ctx.lineWidth = 2;
   ctx.strokeRect(2, 2, w - 4, h - 4);
 
