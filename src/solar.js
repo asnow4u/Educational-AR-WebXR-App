@@ -25,6 +25,10 @@ let planetOptions = [];
 let uiPlanetIndex;
 let collisionAlert, instructionBox;
 let textBox;
+let navTrigger, settingsTrigger;
+let navBox, settingsBox;
+let navVisible = false;
+let settingsVisible = false;
 let planetOptionsVisible = false;
 let uiOptionsVisible = false;
 let atOrigin = true;
@@ -371,42 +375,28 @@ function loadUI() {
   collisionAlert.visible = false;
   camera.add(collisionAlert);
 
-  for (let i = 0; i < jsonObj.ui_size; i++) {
-    let uiGeometry = new THREE.PlaneGeometry(.05, .05, .05);
-    var uiTexture = new THREE.TextureLoader().load(jsonObj.ui[i].texture);
-    let uiMaterial = new THREE.MeshBasicMaterial({ map: uiTexture, transparent: true });
-    uiOptions[i] = new THREE.Mesh(uiGeometry, uiMaterial);
-    uiOptions[i].renderOrder = 999;
-    uiOptions[i].name = jsonObj.ui[i].name;
-    if (i == 0) {
-      uiOptions[i].position.x = jsonObj.ui[i].position.x;
-    } else if (i == 2) {
-      uiOptions[i].position.x = jsonObj.ui[i].position.x;
-    } else {
-      uiOptions[i].position.x = 1.0;
-    }
-    uiOptions[i].position.y += jsonObj.ui[i].position.y;
-    uiOptions[i].position.z -= jsonObj.ui[i].position.z;
-    camera.add(uiOptions[i]);
+  // New Trigger Icons (Drawn via Canvas)
+  navTrigger = createIconTrigger("NAV", 0.13, 0.25); // Top Right
+  settingsTrigger = createIconTrigger("GEAR", 0.13, -0.25); // Bottom Right
+  camera.add(navTrigger);
+  camera.add(settingsTrigger);
 
-    // Hide Drawer and Pause buttons during placement
-    if (i == 0 || i == 2) {
-      uiOptions[i].visible = false;
-    }
-  }
+  // Hidden at start
+  navTrigger.visible = false;
+  settingsTrigger.visible = false;
 
-  for (let i = 0; i < jsonObj.ui[uiPlanetIndex].size; i++) {
-    let uiGeometry = new THREE.PlaneGeometry(.07, .05, .05);
-    let uiTexture = new THREE.ImageUtils.loadTexture(jsonObj.ui[uiPlanetIndex].options[i].texture);
-    let uiMaterial = new THREE.MeshBasicMaterial({ map: uiTexture, transparent: true });
-    planetOptions[i] = new THREE.Mesh(uiGeometry, uiMaterial);
-    planetOptions[i].renderOrder = 999;
-    planetOptions[i].name = jsonObj.ui[uiPlanetIndex].options[i].name;
-    planetOptions[i].position.x = 1.0;
-    planetOptions[i].position.y += jsonObj.ui[uiPlanetIndex].options[i].position.y;
-    planetOptions[i].position.z -= jsonObj.ui[uiPlanetIndex].options[i].position.z;
-    camera.add(planetOptions[i]);
-  }
+  // Setup Dynamic HUD Menus
+  navBox = createHUDMenu("NAVIGATION", 11); // 11 entries: Sun + 9 Planets + Moon
+  settingsBox = createHUDMenu("SETTINGS", 3); // 3 entries: Orbit, Light, Exit
+
+  navBox.position.set(0.05, 0.1, -0.4);
+  settingsBox.position.set(0.05, -0.1, -0.4);
+
+  camera.add(navBox);
+  camera.add(settingsBox);
+
+  navBox.visible = false;
+  settingsBox.visible = false;
 
   //Setup Textbox
   let ctx = document.createElement('canvas').getContext('2d');
@@ -471,8 +461,8 @@ async function activateAR() {
 function onSessionEnd() {
   console.log("SESSION ENDED");
 
-  //Move user to the quiz
-  window.location.href = "./Quiz.html";
+  //Return to home screen
+  window.location.href = "./index.html";
 
   arActivated = false;
   xrSession = null;
@@ -1472,10 +1462,10 @@ function touchSelectEvent() {
       scene.add(originPoint);
       originPoint.position.copy(placementPos);
 
-      // UI Transition: Hide instructions, show corner buttons
+      // UI Transition: Hide instructions, show new triggers
       instructionBox.visible = false;
-      if (uiOptions[0]) uiOptions[0].visible = true;
-      if (uiOptions[2]) uiOptions[2].visible = true;
+      navTrigger.visible = true;
+      settingsTrigger.visible = true;
     } else {
       console.log("cant place yet");
     }
@@ -1521,79 +1511,50 @@ function updateInstructionHUD(text) {
 ******************************************************************/
 function sceneEvent(intersects, obj) {
   if (!jsonObj.objTranslation.inTransit) {
-    switch (obj) {
+    // Hide menus if a planet is selected directly
+    navVisible = false;
+    navBox.visible = false;
+    settingsVisible = false;
+    settingsBox.visible = false;
 
+    switch (obj) {
       case "Sun":
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
         sunSelect();
         break;
-
       case "Mercury":
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
         planetSelect(0);
         break;
-
       case "Venus":
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
         planetSelect(1);
         break;
-
       case "Earth":
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
         planetSelect(2);
-
         if (jsonObj.planets[2].beingViewed) {
           let point = planets[2].worldToLocal(intersects[0].point);
           checkEarthBoundingBoxs(point);
         }
         break;
-
       case "Moon":
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
         moonSelect();
         break;
-
       case "Mars":
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
         planetSelect(3);
         break;
-
       case "Jupiter":
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
         planetSelect(4);
         break;
-
       case "Saturn":
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
         planetSelect(5);
         break;
-
       case "Uranus":
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
         planetSelect(6);
         break;
-
       case "Neptune":
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
         planetSelect(7);
         break;
-
       case "Pluto":
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
         planetSelect(8);
         break;
-
       default:
         break;
     }
@@ -1606,177 +1567,63 @@ function sceneEvent(intersects, obj) {
 ******************************************************************/
 function menuEvent(intersects) {
   if (intersects[0].object.name) {
-    switch (intersects[0].object.name) {
+    let name = intersects[0].object.name;
 
-      case "Drawer":
-        minimizeTextBox(true);
-        toggleUIOptionsVisibility();
-        togglePlanetsOptionsVisibilityOff();
-        break;
+    // Handle New HUD Triggers
+    if (name === "NAV_TRIGGER") {
+      navVisible = !navVisible;
+      navBox.visible = navVisible;
+      settingsVisible = false;
+      settingsBox.visible = false;
+      minimizeTextBox(true);
+      return;
+    }
 
-      case "Lines":
+    if (name === "GEAR_TRIGGER") {
+      settingsVisible = !settingsVisible;
+      settingsBox.visible = settingsVisible;
+      navVisible = false;
+      navBox.visible = false;
+      minimizeTextBox(true);
+      return;
+    }
+
+    // Handle Navigation Menu Items
+    const planetsList = ["SUN", "MERCURY", "VENUS", "EARTH", "MOON", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"];
+    if (planetsList.includes(name)) {
+      if (name === "SUN") sunSelect();
+      else if (name === "MOON") moonSelect();
+      else {
+        const index = planetsList.indexOf(name) - 1; // Mercury is 1 in list, 0 in planetSelect
+        planetSelect(index);
+      }
+      navVisible = false;
+      navBox.visible = false;
+      return;
+    }
+
+    // Handle Settings Menu Items
+    switch (name) {
+      case "ORBIT LINES":
         toggleOrbitLines();
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
+        settingsVisible = false;
+        settingsBox.visible = false;
         break;
-
-      case "Planets":
-        minimizeTextBox(true);
-        togglePlanetsOptionsVisibility();
-        break;
-
-      case "Light":
+      case "LIGHTS":
         toggleLight();
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
+        settingsVisible = false;
+        settingsBox.visible = false;
         break;
-
-      case "OrbitSpeed":
-        switch (jsonObj.orbitScale) {
-          //Fast Speed
-          case 0.1:
-            jsonObj.orbitScale = 7;
-            break;
-
-          //Normal Speed
-          case 1:
-            jsonObj.orbitScale = 0.1;
-            break;
-
-          //Slow Speed
-          case 7:
-            jsonObj.orbitScale = 1;
-            break;
-        }
-        break;
-
-      case "RotationSpeed":
-        switch (jsonObj.rotationScale) {
-          //Fast Speed
-          case 1:
-            jsonObj.rotationScale = 100;
-            break;
-
-          //Normal Speed
-          case 10:
-            jsonObj.rotationScale = 1;
-            break;
-
-          //Slow Speed
-          case 100:
-            jsonObj.rotationScale = 10;
-            break;
-        }
-        break;
-
-      case "Reset":
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
-        resetSolarSystem();
-        break;
-
-      case "Return to Origin":
-        toggleReturnToOrigin();
-        toggleUIOptionsVisibilityOff();
-        togglePlanetsOptionsVisibilityOff();
-        break;
-
-      case "Exit":
-        toggleUIOptionsVisibility();
-        togglePlanetsOptionsVisibilityOff();
-        xrSession.end()
-        break;
-
-      case "Sun":
-        togglePlanetsOptionsVisibilityOff();
-        toggleUIOptionsVisibilityOff();
-        sunSelect();
-        break;
-
-      case "Mercury":
-        togglePlanetsOptionsVisibilityOff();
-        toggleUIOptionsVisibilityOff();
-        planetSelect(0);
-        break;
-
-      case "Venus":
-        togglePlanetsOptionsVisibilityOff();
-        toggleUIOptionsVisibilityOff();
-        planetSelect(1);
-        break;
-
-      case "Earth":
-        togglePlanetsOptionsVisibilityOff();
-        toggleUIOptionsVisibilityOff();
-        planetSelect(2);
-
-        if (jsonObj.planets[2].beingViewed) {
-          let point = planets[2].worldToLocal(intersects[0].point);
-
-          checkEarthBoundingBoxs(point);
-        }
-        break;
-
-      case "Moon":
-        togglePlanetsOptionsVisibilityOff();
-        toggleUIOptionsVisibilityOff();
-        moonSelect();
-        break;
-
-      case "Mars":
-        togglePlanetsOptionsVisibilityOff();
-        toggleUIOptionsVisibilityOff();
-        planetSelect(3);
-        break;
-
-      case "Jupiter":
-        togglePlanetsOptionsVisibilityOff();
-        toggleUIOptionsVisibilityOff();
-        planetSelect(4);
-        break;
-
-      case "Saturn":
-        togglePlanetsOptionsVisibilityOff();
-        toggleUIOptionsVisibilityOff();
-        planetSelect(5);
-        break;
-
-      case "Uranus":
-        togglePlanetsOptionsVisibilityOff();
-        toggleUIOptionsVisibilityOff();
-        planetSelect(6);
-        break;
-
-      case "Neptune":
-        togglePlanetsOptionsVisibilityOff();
-        toggleUIOptionsVisibilityOff();
-        planetSelect(7);
-        break;
-
-      case "Pluto":
-        togglePlanetsOptionsVisibilityOff();
-        toggleUIOptionsVisibilityOff();
-        planetSelect(8);
-        break;
-
-      case "Pause":
-        togglePause();
-        break;
-
-      case "Play":
-        togglePause();
+      case "EXIT MISSION":
+        onSessionEnd();
         break;
 
       case "textBox":
-        //Check if minimized
         if (textBox.position.y == -0.0855) {
           minimizeTextBox(false);
         } else {
           minimizeTextBox(true);
         }
-        break;
-
-      default:
         break;
     }
   }
@@ -2078,51 +1925,7 @@ function checkEarthBoundingBoxs(point) {
 /*****************************************************************
   UI Helper Functions
 *****************************************************************/
-//Open Drawer
-function toggleUIOptionsVisibility() {
-  uiOptionsVisible = !uiOptionsVisible;
 
-  for (let i = 1; i < jsonObj.ui_size; i++) {
-    if (uiOptionsVisible && i != 6 && i != 7) {
-      uiOptions[i].position.x = jsonObj.ui[i].position.x;
-    } else {
-      if (i != 2 && i != 6 && i != 7)
-        uiOptions[i].position.x = 1.0;
-    }
-  }
-
-  uiOptions[6].position.x = (uiOptionsVisible && !atOrigin) ? jsonObj.ui[6].position.x : 1.0;
-}
-
-//Close Drawer
-function toggleUIOptionsVisibilityOff() {
-  uiOptionsVisible = false;
-  for (let i = 1; i < jsonObj.ui_size; i++) {
-    if (i != 2 && i != 7/*&& i!=6*/)
-      uiOptions[i].position.x = 1.0;
-  }
-}
-
-//Open Planet Drawer
-function togglePlanetsOptionsVisibility() {
-  planetOptionsVisible = !planetOptionsVisible;
-
-  for (let i = 0; i < jsonObj.ui[uiPlanetIndex].size; i++) {
-    if (planetOptionsVisible) {
-      planetOptions[i].position.x = 0.05;
-    } else {
-      planetOptions[i].position.x = 1.0;
-    }
-  }
-}
-
-//Close Planet Drawer
-function togglePlanetsOptionsVisibilityOff() {
-  planetOptionsVisible = false;
-  for (let i = 0; i < jsonObj.ui[uiPlanetIndex].size; i++) {
-    planetOptions[i].position.x = 1.0;
-  }
-}
 
 //Change Light
 function toggleLight() {
@@ -2387,6 +2190,105 @@ function minimizeTextBox(minimize) {
   } else {
     textBox.position.y = -0.055;
   }
+}
+
+
+// UI Rendering Helpers
+function createIconTrigger(type, x, y) {
+  let ctx = document.createElement('canvas').getContext('2d');
+  let scale = window.devicePixelRatio || 1;
+  ctx.canvas.width = 128 * scale;
+  ctx.canvas.height = 128 * scale;
+  ctx.scale(scale, scale);
+
+  // Background Circle
+  ctx.fillStyle = 'rgba(11, 11, 21, 0.7)';
+  ctx.beginPath();
+  ctx.arc(64, 64, 60, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Primary Border
+  ctx.strokeStyle = '#4D4DFF';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(64, 64, 60, 0, Math.PI * 2);
+  ctx.stroke();
+
+  if (type === "NAV") {
+    // Planetary Cluster Icon
+    ctx.fillStyle = "#FFFFFF";
+    ctx.beginPath(); ctx.arc(64, 64, 15, 0, Math.PI * 2); ctx.fill(); // Sun
+    ctx.beginPath(); ctx.arc(35, 45, 8, 0, Math.PI * 2); ctx.fill(); // P1
+    ctx.beginPath(); ctx.arc(95, 75, 10, 0, Math.PI * 2); ctx.fill(); // P2
+    ctx.beginPath(); ctx.arc(55, 100, 6, 0, Math.PI * 2); ctx.fill(); // P3
+  } else {
+    // Gear Icon
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(64, 64, 25, 0, Math.PI * 2);
+    ctx.stroke();
+    // Teeth
+    for (let i = 0; i < 8; i++) {
+      ctx.save();
+      ctx.translate(64, 64);
+      ctx.rotate(i * Math.PI / 4);
+      ctx.fillRect(-8, -45, 16, 15);
+      ctx.restore();
+    }
+  }
+
+  let texture = new THREE.CanvasTexture(ctx.canvas);
+  let material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+  let mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.05), material);
+  mesh.renderOrder = 1000;
+  mesh.position.set(x, y, -0.4);
+  mesh.name = type === "NAV" ? "NAV_TRIGGER" : "GEAR_TRIGGER";
+  return mesh;
+}
+
+function createHUDMenu(title, count) {
+  const container = new THREE.Object3D();
+  container.name = title;
+
+  const labels = title === "NAVIGATION"
+    ? ["SUN", "MERCURY", "VENUS", "EARTH", "MOON", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"]
+    : ["ORBIT LINES", "LIGHTS", "EXIT MISSION"];
+
+  labels.forEach((text, i) => {
+    let ctx = document.createElement('canvas').getContext('2d');
+    let scale = window.devicePixelRatio || 1;
+    let w = 256;
+    let h = 48;
+    ctx.canvas.width = w * scale;
+    ctx.canvas.height = h * scale;
+    ctx.scale(scale, scale);
+
+    // Glass Background
+    ctx.fillStyle = 'rgba(11, 11, 21, 0.85)';
+    ctx.fillRect(0, 0, w, h);
+
+    // Neon Accent
+    ctx.fillStyle = '#4D4DFF';
+    ctx.fillRect(0, 0, 4, h);
+
+    // Text
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = '14px "Orbitron", sans-serif';
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 20, h / 2);
+
+    let texture = new THREE.CanvasTexture(ctx.canvas);
+    let material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+    let mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.022), material);
+    mesh.renderOrder = 1100;
+    mesh.position.y = -i * 0.025;
+    mesh.name = text;
+    container.add(mesh);
+  });
+
+  return container;
 }
 
 
