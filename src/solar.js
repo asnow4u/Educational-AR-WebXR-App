@@ -376,8 +376,8 @@ function loadUI() {
   camera.add(collisionAlert);
 
   // New Trigger Icons (Drawn via Canvas)
-  navTrigger = createIconTrigger("NAV", 0.1, 0.25); // Top Right (Recalibrated)
-  settingsTrigger = createIconTrigger("GEAR", 0.1, -0.25); // Bottom Right (Recalibrated)
+  navTrigger = createIconTrigger("NAV", 0.18, 0.25); // Top Right (Pinned to corner)
+  settingsTrigger = createIconTrigger("GEAR", 0.18, -0.25); // Bottom Right (Pinned to corner)
   camera.add(navTrigger);
   camera.add(settingsTrigger);
 
@@ -386,7 +386,7 @@ function loadUI() {
   const pauseTex = new THREE.TextureLoader().load(jsonObj.ui[2].texture);
   uiOptions[2] = new THREE.Mesh(pauseGeom, new THREE.MeshBasicMaterial({ map: pauseTex, transparent: true }));
   uiOptions[2].name = "Pause";
-  uiOptions[2].position.set(-0.13, 0.25, -0.5);
+  uiOptions[2].position.set(-0.18, 0.25, -0.5);
   uiOptions[2].renderOrder = 999;
   uiOptions[2].visible = false;
   camera.add(uiOptions[2]);
@@ -1433,7 +1433,7 @@ function touchSelectEvent() {
 
       //Variables that are touchable
       let sceneIntersectsArray = [sunObj, moonObj, planets[0], planets[1], planets[2], planets[3], planets[4], planets[5], planets[6], planets[7], planets[8], planetOrigins[0], planetOrigins[1], planetOrigins[2], planetOrigins[3], planetOrigins[4], planetOrigins[5], planetOrigins[6], planetOrigins[7], planetOrigins[8]];
-      let menuIntersectsArray = [uiOptions[0], uiOptions[1], uiOptions[2], uiOptions[3], uiOptions[4], uiOptions[5], uiOptions[6], uiOptions[7], uiOptions[8], uiOptions[9], uiOptions[10], planetOptions[0], planetOptions[1], planetOptions[2], planetOptions[3], planetOptions[4], planetOptions[5], planetOptions[6], planetOptions[7], planetOptions[8], planetOptions[9], planetOptions[10], textBox];
+      let menuIntersectsArray = [navTrigger, settingsTrigger, navBox, settingsBox, uiOptions[2], uiOptions[7], textBox];
 
       //Check if ray intercepted and touchable objs
       let intersects = sceneRaycaster.intersectObjects(menuIntersectsArray, true);
@@ -2024,7 +2024,7 @@ function togglePause() {
       }
     }
     uiOptions[2].position.x = 1.0;
-    uiOptions[7].position.x = -0.13;
+    uiOptions[7].position.x = -0.18;
   } else {
     //UnPause
     jsonObj.pause = false;
@@ -2046,7 +2046,7 @@ function togglePause() {
       }
     }
     uiOptions[7].position.x = 1.0;
-    uiOptions[2].position.x = -0.13;
+    uiOptions[2].position.x = -0.18;
   }
 }
 
