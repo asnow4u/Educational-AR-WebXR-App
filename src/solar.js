@@ -1634,13 +1634,17 @@ function menuEvent(intersects) {
       case "Play":
         togglePause();
         break;
-      case "ORBIT LINES":
+      case "ORBIT LINES [ON]":
+      case "ORBIT LINES [OFF]":
         toggleOrbitLines();
+        updateSettingsLabels();
         settingsVisible = false;
         settingsBox.visible = false;
         break;
-      case "LIGHTS":
+      case "LIGHTS [ON]":
+      case "LIGHTS [OFF]":
         toggleLight();
+        updateSettingsLabels();
         settingsVisible = false;
         settingsBox.visible = false;
         break;
@@ -1654,9 +1658,41 @@ function menuEvent(intersects) {
         } else {
           minimizeTextBox(true);
         }
-        break;
     }
   }
+}
+
+
+function updateSettingsLabels() {
+  if (!settingsBox) return;
+
+  const orbitLabel = jsonObj.showPlanetLines ? "ORBIT LINES [ON]" : "ORBIT LINES [OFF]";
+  const lightLabel = cameraLight.visible ? "LIGHTS [ON]" : "LIGHTS [OFF]";
+  const labels = [orbitLabel, lightLabel, "EXIT MISSION"];
+
+  settingsBox.children.forEach((mesh, i) => {
+    let text = labels[i];
+    let ctx = document.createElement('canvas').getContext('2d');
+    let scale = window.devicePixelRatio || 1;
+    let w = 256;
+    let h = 48;
+    ctx.canvas.width = w * scale;
+    ctx.canvas.height = h * scale;
+    ctx.scale(scale, scale);
+
+    ctx.fillStyle = 'rgba(11, 11, 21, 0.85)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#4D4DFF';
+    ctx.fillRect(0, 0, 4, h);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = '18px "Orbitron", sans-serif';
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 20, h / 2);
+
+    mesh.material.map = new THREE.CanvasTexture(ctx.canvas);
+    mesh.name = text;
+  });
 }
 
 
@@ -2287,9 +2323,14 @@ function createHUDMenu(title, count) {
   const container = new THREE.Object3D();
   container.name = title;
 
-  const labels = title === "NAVIGATION"
-    ? ["SUN", "MERCURY", "VENUS", "EARTH", "MOON", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"]
-    : ["ORBIT LINES", "LIGHTS", "EXIT MISSION"];
+  let labels;
+  if (title === "NAVIGATION") {
+    labels = ["SUN", "MERCURY", "VENUS", "EARTH", "MOON", "MARS", "JUPITER", "SATURN", "URANUS", "NEPTUNE", "PLUTO"];
+  } else {
+    const orbitLabel = jsonObj.showPlanetLines ? "ORBIT LINES [ON]" : "ORBIT LINES [OFF]";
+    const lightLabel = cameraLight.visible ? "LIGHTS [ON]" : "LIGHTS [OFF]";
+    labels = [orbitLabel, lightLabel, "EXIT MISSION"];
+  }
 
   labels.forEach((text, i) => {
     let ctx = document.createElement('canvas').getContext('2d');
@@ -2310,7 +2351,7 @@ function createHUDMenu(title, count) {
 
     // Text
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = '14px "Orbitron", sans-serif';
+    ctx.font = '18px "Orbitron", sans-serif';
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     ctx.fillText(text, 20, h / 2);
@@ -2334,13 +2375,11 @@ function repositionHUD() {
   const m = camera.projectionMatrix.elements;
   const d = 0.5; // Positioning depth
 
-  // Calculate half-width and half-height at depth d using projection matrix
-  // P[0] = 1/(aspect * tan(f/2)), P[5] = 1/tan(f/2)
   const halfH = d / m[5];
   const halfW = d / m[0];
 
-  // Use a 85% safety margin to stay away from the exact screen edges
-  const margin = 0.85;
+  // Padding Adjustment: Using 0.80 to bring them in more from corners
+  const margin = 0.80;
   const safeW = halfW * margin;
   const safeH = halfH * margin;
 
@@ -2355,12 +2394,12 @@ function repositionHUD() {
   // Bottom Right: Settings Trigger
   if (settingsTrigger) settingsTrigger.position.set(safeW, -safeH, -d);
 
-  // Position menus relative to triggers
-  if (navBox) navBox.position.set(safeW - 0.07, safeH - 0.05, -d);
-  if (settingsBox) settingsBox.position.set(safeW - 0.07, -safeH + 0.1, -d);
+  // Position menus relative to triggers (Moved right slightly: safeW - 0.05)
+  if (navBox) navBox.position.set(safeW - 0.05, safeH - 0.05, -d);
+  if (settingsBox) settingsBox.position.set(safeW - 0.05, -safeH + 0.1, -d);
 
   // Initial Pause/Play positioning
-  if (uiOptions[7]) uiOptions[7].position.set(1.0, safeH, -d); // Play (hidden)
+  if (uiOptions[7]) uiOptions[7].position.set(1.0, safeH, -d);
 }
 
 
